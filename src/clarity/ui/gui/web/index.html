@@ -1,0 +1,2962 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClarityPC — Diagnóstico, Optimización y Seguridad</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E">
+  <style>
+    /* Google Stitch Design System: "Cybernetic Telemetry" Tokens */
+    :root[data-theme="dark"] {
+      --bg: #121214;
+      --surface: #18181b;
+      --surface-subtle: #202024;
+      --surface-inset: #101012;
+      --border: #2e2e35;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-hover: #3f3f4a;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --cat-stroke: #f4f4f5;
+
+      --primary: #00f0ff;
+      --primary-dim: rgba(0, 240, 255, 0.15);
+      --primary-glow: 0 0 16px -4px rgba(0, 240, 255, 0.35);
+
+      --optimal-text: #00e699;
+      --optimal-bg: rgba(0, 230, 153, 0.08);
+      --optimal-border: rgba(0, 230, 153, 0.25);
+
+      --warning-text: #ffaa00;
+      --warning-bg: rgba(255, 170, 0, 0.08);
+      --warning-border: rgba(255, 170, 0, 0.25);
+
+      --danger-text: #ff3366;
+      --danger-bg: rgba(255, 51, 102, 0.08);
+      --danger-border: rgba(255, 51, 102, 0.25);
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f4f4f6;
+      --surface: #ffffff;
+      --surface-subtle: #ececef;
+      --surface-inset: #f8f8fa;
+      --border: #d4d4d8;
+      --border-subtle: rgba(0, 0, 0, 0.06);
+      --border-hover: #a1a1aa;
+      --text: #09090b;
+      --text-muted: #52525b;
+      --text-dim: #71717a;
+      --cat-stroke: #18181b;
+
+      --primary: #008b99;
+      --primary-dim: rgba(0, 139, 153, 0.12);
+      --primary-glow: 0 0 12px rgba(0, 139, 153, 0.25);
+
+      --optimal-text: #008f5d;
+      --optimal-bg: rgba(0, 143, 93, 0.1);
+      --optimal-border: rgba(0, 143, 93, 0.3);
+
+      --warning-text: #c45e00;
+      --warning-bg: rgba(196, 94, 0, 0.1);
+      --warning-border: rgba(196, 94, 0, 0.3);
+
+      --danger-text: #d61545;
+      --danger-bg: rgba(214, 21, 69, 0.1);
+      --danger-border: rgba(214, 21, 69, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; transition: background-color 0.2s ease, color 0.2s ease; }
+
+    /* Top Navigation Bar */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .brand-area { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .brand-icon { width: 22px; height: 22px; stroke: var(--primary); fill: none; stroke-width: 2; }
+    .brand-name { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+    .version-chip {
+      font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+      background: var(--surface-subtle); color: var(--text-dim); border: 1px solid var(--border-subtle);
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    .top-telemetry { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .telemetry-chip {
+      display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-muted);
+      background: var(--surface-subtle); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-subtle);
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--optimal-text); }
+    .metric-value { font-family: ui-monospace, SFMono-Regular, monospace; font-weight: 600; color: var(--text); }
+
+    .header-btn {
+      background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 6px;
+      height: 32px; padding: 0 10px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text); font-size: 0.75rem; font-weight: 700; transition: all 0.15s ease;
+    }
+    .header-btn:hover { border-color: var(--border-hover); color: var(--primary); }
+    .header-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    /* Main Container - Fullscreen Fluid & Ultra-Responsive */
+    main {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      padding: 18px 32px 36px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      flex: 1;
+      box-sizing: border-box;
+    }
+    @media (min-width: 1920px) {
+      main { padding: 22px 42px 42px 42px; }
+      header { padding: 12px 42px; }
+    }
+
+    /* INTERACTIVE MASCOT COMPANION (BYTE) BAR */
+    .mascot-tour-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .mascot-avatar {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--surface-subtle);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; cursor: pointer; transition: transform 0.2s ease;
+    }
+    .mascot-avatar:hover { transform: scale(1.08); border-color: var(--primary); }
+    .cat-line-svg { width: 26px; height: 26px; stroke: var(--cat-stroke); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    
+    .tour-message-box { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .tour-name-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; color: var(--text); }
+    .tour-bubble-text { font-size: 0.83rem; color: var(--text-muted); line-height: 1.45; }
+
+    .tour-action-chip {
+      background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 12px; font-size: 0.78rem; font-weight: 600; color: var(--text); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;
+    }
+    .tour-action-chip:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* FLOATING ROAMING PET SPRITE */
+    #roamingCat {
+      position: absolute; width: 44px; height: 44px; pointer-events: none; z-index: 150;
+      transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1); display: none; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.4));
+    }
+    .roaming-bubble {
+      position: absolute; bottom: 48px; left: -90px; width: 220px; background: var(--surface);
+      border: 1px solid var(--primary); border-radius: 6px; padding: 8px 12px; font-size: 0.76rem;
+      color: var(--text); box-shadow: var(--primary-glow); pointer-events: none; text-align: left; line-height: 1.35;
+    }
+
+    /* ACTION BAR */
+    .action-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .btn-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .btn {
+      padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; border: 1px solid transparent;
+      user-select: none;
+    }
+    .btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .btn-primary { background: var(--text); color: var(--bg); border: 1px solid var(--text); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-cyan { background: var(--primary); color: #09090b; border: 1px solid var(--primary); font-weight: 700; }
+    .btn-cyan:hover { box-shadow: var(--primary-glow); }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--surface-subtle); border-color: var(--border-hover); }
+    .btn-warning { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+
+    /* OVERVIEW HARDWARE METRICS STRIP */
+    .overview-strip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+    .strip-stat { display: flex; flex-direction: column; gap: 4px; }
+    .strip-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+    .strip-value { font-size: 0.9rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; font-family: ui-monospace, SFMono-Regular, monospace; }
+    .stat-bar { width: 100%; height: 4px; background: var(--surface-subtle); border-radius: 2px; overflow: hidden; margin-top: 2px; }
+    .stat-bar-fill { height: 100%; background: var(--primary); transition: width 0.4s ease; }
+
+    /* TABS */
+    .tab-bar { display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 6px; overflow-x: auto; }
+    .tab-item {
+      background: none; border: none; color: var(--text-muted); font-size: 0.82rem; font-weight: 600;
+      padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+    }
+    .tab-item:hover { color: var(--text); }
+    .tab-item.active { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+    .view-pane { display: none; }
+    .view-pane.active { display: flex; flex-direction: column; gap: 16px; }
+
+    /* BENTO GRID - DYNAMIC MULTI-COLUMN AUTO-FIT */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      position: relative;
+      width: 100%;
+    }
+    @media (min-width: 1360px) {
+      #pane-cleaner .bento-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      #pane-topology .bento-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 1040px) { .bento-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 680px) { .bento-grid { grid-template-columns: 1fr; } }
+
+    .bento-card {
+      background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 8px;
+      padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px;
+      transition: all 0.2s ease; position: relative; min-height: 180px;
+    }
+    .bento-card:hover { border-color: var(--border-hover); }
+    .bento-card.highlight-focus { border-color: var(--primary); box-shadow: var(--primary-glow); }
+
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .card-meta { display: flex; align-items: center; gap: 10px; }
+    .component-icon {
+      width: 32px; height: 32px; border-radius: 6px; background: var(--surface-subtle); border: 1px solid var(--border-subtle);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .component-icon svg { width: 16px; height: 16px; stroke: var(--text-muted); fill: none; stroke-width: 1.8; }
+    .component-title { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+    .component-subtitle { font-size: 0.72rem; color: var(--text-dim); }
+
+    .status-chip {
+      font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+      display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .chip-optimal { color: var(--optimal-text); background: var(--optimal-bg); border: 1px solid var(--optimal-border); }
+    .chip-warning { color: var(--warning-text); background: var(--warning-bg); border: 1px solid var(--warning-border); }
+    .chip-critical { color: var(--danger-text); background: var(--danger-bg); border: 1px solid var(--danger-border); }
+    .chip-neutral { color: var(--text-muted); background: var(--surface-subtle); border: 1px solid var(--border); }
+
+    .card-content { display: flex; flex-direction: column; gap: 8px; }
+    .telemetry-row { display: flex; justify-content: space-between; font-size: 0.78rem; }
+    .telemetry-label { color: var(--text-dim); }
+    .telemetry-val { font-family: ui-monospace, SFMono-Regular, monospace; font-weight: 600; color: var(--text); }
+
+    .card-alert-box { border-radius: 6px; padding: 8px 10px; font-size: 0.74rem; line-height: 1.45; }
+    .alert-critical { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger-text); }
+    .alert-warning { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); }
+
+    /* SIMULATED WINDOWS EXPLORER / FOLDER INSPECTION THEATER */
+    .folder-theater-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      display: none;
+    }
+    .folder-header {
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .folder-title { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; color: var(--text); }
+    .folder-path-bar {
+      background: var(--surface-inset); border: 1px solid var(--border-subtle); border-radius: 4px;
+      padding: 4px 10px; font-family: ui-monospace, monospace; font-size: 0.75rem; color: var(--primary);
+    }
+    .folder-content-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+    .file-item-row {
+      display: flex; justify-content: space-between; align-items: center; padding: 6px 10px;
+      background: var(--surface-inset); border-radius: 4px; border: 1px solid var(--border-subtle); font-size: 0.78rem;
+    }
+    .file-meta-name { display: flex; align-items: center; gap: 8px; font-family: ui-monospace, monospace; color: var(--text); }
+
+    /* OSCILLOSCOPE SECTION */
+    .oscilloscope-panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px;
+    }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .panel-title { font-size: 0.88rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .panel-title svg { width: 16px; height: 16px; stroke: var(--primary); fill: none; stroke-width: 2; }
+    .canvas-box { width: 100%; height: 90px; background: var(--surface-inset); border-radius: 6px; border: 1px solid var(--border-subtle); overflow: hidden; }
+    canvas { width: 100%; height: 100%; }
+
+    /* MODES DECK */
+    .modes-deck { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .mode-box {
+      background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 16px;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 12px; cursor: pointer; transition: all 0.15s ease;
+    }
+    .mode-box:hover { border-color: var(--border-hover); background: var(--surface-subtle); }
+    .mode-box-header { display: flex; align-items: center; gap: 12px; }
+    .mode-box-icon { width: 32px; height: 32px; border-radius: 6px; background: var(--surface-subtle); display: flex; align-items: center; justify-content: center; }
+    .mode-box-icon svg { width: 17px; height: 17px; stroke: var(--text); fill: none; stroke-width: 1.8; }
+    .mode-box-title { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+    .mode-box-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; }
+    .mode-box-action { font-size: 0.78rem; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+
+    /* MODAL */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      max-width: 600px; width: 100%; padding: 22px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .modal-head h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .close-btn { background: none; border: none; color: var(--text-dim); font-size: 1.25rem; cursor: pointer; }
+    .modal-step { background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
+    .key-badge { background: var(--surface-inset); color: var(--text); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; border: 1px solid var(--border); }
+
+    /* Toast Banner */
+    .toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast-pill {
+      background: var(--surface); border: 1px solid var(--primary); color: var(--text);
+      padding: 10px 16px; border-radius: 8px; font-size: 0.8rem; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      display: flex; align-items: center; gap: 10px; animation: slideUp 0.3s ease; pointer-events: auto;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .vram-progress-bar {
+      width: 100%; height: 10px; background: var(--surface-inset); border-radius: 5px; overflow: hidden;
+      border: 1px solid var(--border-subtle); margin: 12px 0;
+    }
+    .vram-progress-fill {
+      height: 100%; width: 0%; background: var(--primary); transition: width 0.25s ease;
+    }
+    .game-item-card {
+      background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: 6px;
+      padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    }
+
+    /* TOGGLE SWITCH & SETTINGS */
+    .toggle-switch {
+      position: relative; display: inline-block; width: 38px; height: 20px; flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; inset: 0; background-color: var(--surface-inset);
+      border: 1px solid var(--border); transition: .2s; border-radius: 20px;
+    }
+    .toggle-slider:before {
+      position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px;
+      background-color: var(--text-dim); transition: .2s; border-radius: 50%;
+    }
+    input:checked + .toggle-slider { background-color: var(--primary); border-color: var(--primary); }
+    input:checked + .toggle-slider:before { transform: translateX(18px); background-color: #000; }
+
+    .setting-row {
+      display: flex; justify-content: space-between; align-items: center; padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle); gap: 14px;
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-meta { display: flex; flex-direction: column; gap: 2px; }
+    .setting-title { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+    .setting-desc { font-size: 0.72rem; color: var(--text-muted); line-height: 1.35; }
+    .setting-control select, .setting-control input[type="number"] {
+      background: var(--surface-inset); border: 1px solid var(--border); color: var(--text);
+      padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; outline: none;
+    }
+
+    /* HEALTH SCORECARD GAUGE */
+    .health-overview {
+      display: flex; align-items: center; gap: 16px; background: var(--surface-subtle);
+      border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px; margin-bottom: 12px;
+    }
+    .health-gauge-badge {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--danger-text);
+      background: var(--surface-inset); flex-shrink: 0;
+    }
+    .health-gauge-badge.optimal { border-color: var(--optimal-text); }
+    .health-gauge-badge.warning { border-color: var(--warning-text); }
+    .health-gauge-badge.critical { border-color: var(--danger-text); }
+    .health-score-num { font-size: 1.6rem; font-weight: 800; line-height: 1; color: var(--text); }
+    .health-score-max { font-size: 0.65rem; color: var(--text-dim); }
+    .health-penalty-item {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+      background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: 6px;
+      padding: 10px 12px; margin-bottom: 8px; font-size: 0.76rem;
+    }
+    .health-penalty-tag {
+      background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border);
+      padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 0.7rem; white-space: nowrap;
+    }
+    .health-potential-box {
+      background: var(--surface-inset); border: 1px dashed var(--primary); border-radius: 6px;
+      padding: 10px 14px; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header>
+    <div class="brand-area" onclick="switchPane('pane-topology')" style="cursor:pointer;" title="ClarityPC">
+      <svg class="brand-icon" viewBox="0 0 24 24">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      <span class="brand-name">ClarityPC</span>
+      <span class="version-chip">v1.0.0</span>
+    </div>
+
+    <div class="top-telemetry">
+      <div class="telemetry-chip">
+        <span class="status-dot" id="pulseDot"></span>
+        <span data-i18n="top_dpc">Jitter DPC:</span>
+        <span class="metric-value" id="pulseMicrosec">14.2 µs</span>
+      </div>
+      <div class="telemetry-chip">
+        <span>CPU:</span>
+        <span class="metric-value" id="topCpuPct">3.5%</span>
+      </div>
+      <div class="telemetry-chip">
+        <span>RAM:</span>
+        <span class="metric-value" id="topRamLoad">76%</span>
+      </div>
+      <div class="telemetry-chip">
+        <span>GPU Temp:</span>
+        <span class="metric-value" id="topGpuTemp">50 °C</span>
+      </div>
+
+      <div class="telemetry-chip" id="watchdogChip" onclick="toggleWatchdog()" style="cursor:pointer;" title="Auto-TDR Guard Watchdog">
+        <span class="status-dot" id="watchdogDot"></span>
+        <span>Watchdog:</span>
+        <span class="metric-value" id="watchdogStatusText">ACTIVO</span>
+      </div>
+
+      <div class="telemetry-chip" id="healthScoreChip" onclick="openHealthModal()" style="cursor:pointer;" title="Índice de Salud Global del PC">
+        <span class="status-dot" id="healthScoreDot" style="background:var(--danger-text);"></span>
+        <span data-i18n="top_health">Salud:</span>
+        <span class="metric-value" id="healthScoreVal">35/100</span>
+      </div>
+
+      <!-- Settings Button -->
+      <button class="header-btn" id="btnSettings" onclick="openSettingsModal()" title="Configuración / Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+
+      <!-- Language Selector (ES / EN) -->
+      <button class="header-btn" id="btnLang" onclick="toggleLanguage()" title="Cambiar idioma / Switch language">
+        ES
+      </button>
+
+      <!-- Theme Switcher (Dark / Light) -->
+      <button class="header-btn" id="btnTheme" onclick="toggleTheme()" title="Alternar Modo Claro / Oscuro">
+        <svg id="themeIconSun" viewBox="0 0 24 24" style="display:none;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="themeIconMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- INTERACTIVE MINIMALIST MASCOT TOUR BAR (BYTE) -->
+    <div class="mascot-tour-bar">
+      <div class="mascot-avatar" onclick="startDeepByteInspection()" title="Haz clic para iniciar la auditoría profunda asistida con Byte">
+        <svg class="cat-line-svg" viewBox="0 0 24 24">
+          <path d="M4 11V6l4 3h8l4-3v5c0 5-3.5 9-8 9s-8-4-8-9z"/>
+          <circle cx="9" cy="12" r="1" fill="currentColor"/>
+          <circle cx="15" cy="12" r="1" fill="currentColor"/>
+          <path d="M12 14v1.5M10.5 15.5h3"/>
+        </svg>
+      </div>
+
+      <div class="tour-message-box">
+        <div class="tour-name-row">
+          <span data-i18n="byte_title">Byte — Copiloto Técnico Minimalista</span>
+          <span style="font-size:0.72rem; color:var(--primary); font-weight:normal;" id="tourStepBadge">Listo para auditar</span>
+        </div>
+        <div class="tour-bubble-text" id="tourText" data-i18n="byte_intro">
+          Presiona <strong>"Iniciar Auditoría Asistida"</strong> para que Byte recorra el sistema, abra carpetas críticas de Windows en pantalla y te explique en vivo cada registro forense.
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--text-muted); cursor:pointer; user-select:none;">
+          <input type="checkbox" id="chkAutoOpenRealFolders" style="cursor:pointer; accent-color:var(--primary);">
+          <span data-i18n="tour_open_real">Abrir Explorador Real en pantalla</span>
+        </label>
+        <button class="tour-action-chip" onclick="startDeepByteInspection()">
+          <svg style="width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2;" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span data-i18n="btn_start_tour">Iniciar Auditoría Asistida con Byte</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- FLOATING ROAMING PET SPRITE -->
+    <div id="roamingCat">
+      <div class="roaming-bubble" id="roamingBubble">Inspeccionando...</div>
+      <svg class="cat-line-svg" viewBox="0 0 24 24" style="width:40px; height:40px; filter:drop-shadow(0 2px 8px var(--primary));">
+        <path d="M4 11V6l4 3h8l4-3v5c0 5-3.5 9-8 9s-8-4-8-9z"/>
+        <circle cx="9" cy="12" r="1" fill="currentColor"/>
+        <circle cx="15" cy="12" r="1" fill="currentColor"/>
+        <path d="M12 14v1.5M10.5 15.5h3"/>
+      </svg>
+    </div>
+
+    <!-- INTERACTIVE WINDOWS FOLDER & FILE INSPECTION THEATER -->
+    <div class="folder-theater-card" id="folderTheater">
+      <div class="folder-header">
+        <div class="folder-title">
+          <svg style="width:16px; height:16px; stroke:var(--primary); fill:none; stroke-width:2;" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          <span id="folderTitleName">Explorador de Archivos de Windows</span>
+        </div>
+        <div class="folder-path-bar" id="folderPathText">C:\Windows\Minidump</div>
+        <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.72rem;" onclick="openNativeFolder()">
+          <span data-i18n="open_native_explorer">Abrir en Explorador Real ↗</span>
+        </button>
+      </div>
+
+      <div class="folder-content-body" id="folderFilesList">
+        <!-- Injected via JavaScript during tour -->
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btnScan" onclick="startDeepByteInspection()">
+          <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M19 11a8 8 0 11-16 0 8 8 0 0116 0z"/></svg>
+          <span data-i18n="btn_scan">Escanear Sistema</span>
+        </button>
+        <button class="btn btn-secondary" onclick="openSurgeryModal()">
+          <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+          <span data-i18n="btn_assisted_mode">Modo Asistido (XMP / GPU)</span>
+        </button>
+        <button class="btn btn-secondary" id="btnGpuCap" onclick="toggleGpuEmergency()">
+          <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span data-i18n="btn_gpu_cap">Límite Seguro GPU (100W)</span>
+        </button>
+        <button class="btn btn-secondary" onclick="exportPdf()">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+          <span data-i18n="btn_export_pdf">Exportar Informe PDF</span>
+        </button>
+        <button class="btn btn-secondary" id="btnVramTest" onclick="openVramModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span data-i18n="btn_vram_test">Test VRAM (15s)</span>
+        </button>
+        <button class="btn btn-secondary" id="btnGameBoost" onclick="openGameModal()">
+          <svg viewBox="0 0 24 24"><polygon points="6 2 18 2 18 6 6 6 6 2"/><polygon points="3 6 21 6 21 16 3 16 3 6"/><line x1="10" y1="11" x2="14" y2="11"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+          <span data-i18n="btn_game_boost">Optimizar Juego</span>
+        </button>
+        <button class="btn btn-secondary" id="btnForumReport" onclick="copyForumReport()">
+          <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+          <span data-i18n="btn_forum_report">Reporte Foros</span>
+        </button>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="executeRebootUefi()">
+          <svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10"/></svg>
+          <span data-i18n="btn_reboot_uefi">Reiniciar en UEFI</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Overview Strip -->
+    <div class="overview-strip">
+      <div class="strip-stat">
+        <span class="strip-label" data-i18n="lbl_cpu">Procesador (CPU)</span>
+        <span class="strip-value" id="cardCpuValue">i7-10700KF &bull; 3.5%</span>
+        <div class="stat-bar"><div class="stat-bar-fill" id="cpuBarFill" style="width: 15%;"></div></div>
+      </div>
+      <div class="strip-stat">
+        <span class="strip-label" data-i18n="lbl_ram">Memoria RAM</span>
+        <span class="strip-value" id="cardRamValue">12.9 GB / 16 GB</span>
+        <div class="stat-bar"><div class="stat-bar-fill" id="ramBarFill" style="width: 77%;"></div></div>
+      </div>
+      <div class="strip-stat">
+        <span class="strip-label" data-i18n="lbl_gpu">Tarjeta Gráfica (GPU)</span>
+        <span class="strip-value" id="cardGpuValue">RTX 3060 &bull; 15W / 50°C</span>
+        <div class="stat-bar"><div class="stat-bar-fill" id="gpuBarFill" style="width: 15%;"></div></div>
+      </div>
+      <div class="strip-stat">
+        <span class="strip-label" data-i18n="lbl_stability">Estado de Estabilidad</span>
+        <span class="strip-value" style="color:var(--danger-text)" data-i18n="val_attention">Atención Requerida</span>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width: 40%; background:var(--danger-text);"></div></div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tab-bar">
+      <button class="tab-item active" onclick="switchPane('pane-topology')" data-i18n="tab_topology">Topología de Hardware</button>
+      <button class="tab-item" onclick="switchPane('pane-cleaner')" data-i18n="tab_cleaner">Higiene y Limpieza Profunda</button>
+      <button class="tab-item" onclick="switchPane('pane-security')" data-i18n="tab_security">Auditoría de Seguridad & Procesos</button>
+      <button class="tab-item" onclick="switchPane('pane-modes')" data-i18n="tab_modes">Perfiles de 1 Clic</button>
+      <button class="tab-item" onclick="switchPane('pane-telemetry')" data-i18n="tab_telemetry">Latencia DPC en Vivo</button>
+      <button class="tab-item" onclick="switchPane('pane-audit')" data-i18n="tab_audit">Registros Forenses</button>
+    </div>
+
+    <!-- TAB 1: BENTO TOPOLOGY GRID -->
+    <div id="pane-topology" class="view-pane active">
+      <div class="bento-grid" id="topologyBentoGrid">
+        <!-- 1. CPU Card -->
+        <div class="bento-card" id="card-cpu">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
+              </div>
+              <div>
+                <div class="component-title" data-i18n="card_cpu_title">Procesador (CPU)</div>
+                <div class="component-subtitle">Intel Core i7-10700KF</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal" data-i18n="chip_optimal">Óptimo</span>
+          </div>
+
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="cpu_cores">Configuración</span>
+              <span class="telemetry-val">8 Núcleos / 16 Hilos</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="cpu_clocks">Frecuencia Base / Turbo</span>
+              <span class="telemetry-val">3.80 GHz / 5.10 GHz</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="cpu_igpu">Gráfica Integrada</span>
+              <span class="telemetry-val" data-i18n="cpu_absent">Ausente (KF)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. RAM Card -->
+        <div class="bento-card" id="card-ram" style="cursor:pointer;" onclick="openSurgeryModal()">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><path d="M2 6h20v12H2zM6 10v4M10 10v4M14 10v4M18 10v4M2 18h20v2H2z"/></svg>
+              </div>
+              <div>
+                <div class="component-title" data-i18n="card_ram_title">Memoria RAM</div>
+                <div class="component-subtitle">16 GB DDR4 (Dual-Channel)</div>
+              </div>
+            </div>
+            <span class="status-chip chip-warning" data-i18n="chip_bottleneck">Cuello de Botella</span>
+          </div>
+
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="ram_current">Frecuencia Configurada</span>
+              <span class="telemetry-val" style="color:var(--warning-text)">2666 MHz</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="ram_rated">Frecuencia Nominal (XMP)</span>
+              <span class="telemetry-val">3200 MHz</span>
+            </div>
+            <div class="card-alert-box alert-warning" data-i18n="ram_alert">
+              <strong>Pérdida de ancho de banda: -17%.</strong> XMP desactivado en firmware BIOS.
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. GPU Card -->
+        <div class="bento-card" id="card-gpu" style="cursor:pointer;" onclick="openSurgeryModal()">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="8" cy="12" r="2.5"/><circle cx="16" cy="12" r="2.5"/><path d="M6 18h12"/></svg>
+              </div>
+              <div>
+                <div class="component-title" data-i18n="card_gpu_title">Tarjeta Gráfica (GPU)</div>
+                <div class="component-subtitle">EVGA GeForce RTX 3060 12GB</div>
+              </div>
+            </div>
+            <span class="status-chip chip-critical" data-i18n="chip_critical">Falla Crítica</span>
+          </div>
+
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="gpu_driver">Controlador</span>
+              <span class="telemetry-val">NVIDIA 617.42 (WDDM 3.2)</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="gpu_tdr">Cuelgues TDR Registrados</span>
+              <span class="telemetry-val" style="color:var(--danger-text)">448 Eventos</span>
+            </div>
+            <div class="card-alert-box alert-critical" data-i18n="gpu_alert">
+              <strong>Inestabilidad en 3D (P0):</strong> Colapso inmediato de tensión/VRAM al superar 16W.
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Motherboard Card -->
+        <div class="bento-card" id="card-board">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h3v3h-3z"/></svg>
+              </div>
+              <div>
+                <div class="component-title" data-i18n="card_board_title">Placa Base & Firmware</div>
+                <div class="component-subtitle">Gigabyte Z490 AORUS ULTRA</div>
+              </div>
+            </div>
+            <span class="status-chip chip-neutral" data-i18n="chip_verified">Verificado</span>
+          </div>
+
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="board_bios">Versión de BIOS</span>
+              <span class="telemetry-val">F22 (American Megatrends)</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="board_secboot">Arranque Seguro</span>
+              <span class="telemetry-val" style="color:var(--warning-text)" data-i18n="val_disabled">Desactivado</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="board_pcie">Interfaz Bus PCIe</span>
+              <span class="telemetry-val">PCIe 3.0 x16 Activo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Storage Card -->
+        <div class="bento-card" id="card-storage">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><path d="M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2zM6 12h2M10 12h.01M18 12h.01"/></svg>
+              </div>
+              <div>
+                <div class="component-title" data-i18n="card_storage_title">Almacenamiento NVMe</div>
+                <div class="component-subtitle">Samsung 980 PRO + Gigabyte SSD</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal" data-i18n="chip_health_100">Salud 100%</span>
+          </div>
+
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label">SMART</span>
+              <span class="telemetry-val" style="color:var(--optimal-text)">Healthy / Normal</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="storage_trim">Mantenimiento TRIM</span>
+              <span class="telemetry-val" data-i18n="val_optimized">Optimizado (278 GB)</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="storage_free">Espacio Libre C:</span>
+              <span class="telemetry-val">~299 GB Disponibles</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. PSU Card -->
+        <div class="bento-card" id="card-psu">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10"/></svg>
+              </div>
+              <div>
+                <div class="component-title" data-i18n="card_psu_title">Suministro Eléctrico / PSU</div>
+                <div class="component-subtitle">Línea de 12V & Eventos de Kernel</div>
+              </div>
+            </div>
+            <span class="status-chip chip-critical" data-i18n="chip_unstable">Inestable</span>
+          </div>
+
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="psu_kp41">Reinicios Kernel-Power 41</span>
+              <span class="telemetry-val" style="color:var(--danger-text)">18 Cortes (48h)</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label" data-i18n="psu_plan">Plan de Energía</span>
+              <span class="telemetry-val" data-i18n="val_ultimate">Máximo Rendimiento</span>
+            </div>
+            <div class="card-alert-box alert-critical" data-i18n="psu_alert">
+              <strong>Protección OCP/UVP disparada:</strong> Caída repentina de tensión al subir la GPU a 170W.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: HIGIENE Y LIMPIEZA PROFUNDA (NEW PILAR 4) -->
+    <div id="pane-cleaner" class="view-pane">
+      <div class="bento-grid">
+        <!-- 1. DirectX Shaders -->
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Caché de Sombreadores DirectX</div>
+                <div class="component-subtitle">%LOCALAPPDATA%\NVIDIA\DXCache</div>
+              </div>
+            </div>
+            <span class="status-chip chip-warning">1.2 GB Obsoletos</span>
+          </div>
+          <div class="card-content">
+            <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">
+              Purga binarios compilados por versiones antiguas del driver gráfico que generan tartamudeo (stuttering).
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-secondary" onclick="runDryRunAction('clean_directx_shader_cache')">Vista Previa</button>
+              <button class="btn btn-primary" onclick="applyCleanAction('clean_directx_shader_cache')">Limpiar Seguro</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Safe Temp Files (>24h) -->
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Higiene de Temporales (>24h)</div>
+                <div class="component-subtitle">%TEMP% huérfano con whitelist</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal">Filtro Seguro</span>
+          </div>
+          <div class="card-content">
+            <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">
+              Elimina únicamente temporales con más de 24 horas de antigüedad. Preserva instaladores activos y sesiones abiertas.
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-secondary" onclick="runDryRunAction('clean_safe_temp')">Vista Previa</button>
+              <button class="btn btn-primary" onclick="applyCleanAction('clean_safe_temp')">Limpiar Seguro</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Windows Update Cache -->
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Descargas de Windows Update</div>
+                <div class="component-subtitle">SoftwareDistribution\Download</div>
+              </div>
+            </div>
+            <span class="status-chip chip-neutral">Auditado</span>
+          </div>
+          <div class="card-content">
+            <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">
+              Libera gigabytes de parches ya instalados que Windows nunca vacía por sí solo tras actualizarse.
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-secondary" onclick="runDryRunAction('clean_win_update_cache')">Vista Previa</button>
+              <button class="btn btn-primary" onclick="applyCleanAction('clean_win_update_cache')">Limpiar Seguro</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. DNS Resolver Flush -->
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Purgado de Resolución DNS</div>
+                <div class="component-subtitle">Clear-DnsClientCache API</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal">Inocuo / Seguro</span>
+          </div>
+          <div class="card-content">
+            <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">
+              Elimina entradas caducadas o corruptas en la caché del resolvedor de Windows, acelerando la conexión a servidores.
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-primary" onclick="applyCleanAction('network_dns_flush')">Vaciar Caché DNS</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. SSD / NVMe TRIM Optimization -->
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><path d="M22 12H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11zM6 16h.01M10 16h.01"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Optimización TRIM SSD / NVMe</div>
+                <div class="component-subtitle">Optimize-Volume -ReTrim</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal">Hardware NAND</span>
+          </div>
+          <div class="card-content">
+            <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">
+              Consolida bloques libres en unidades de estado sólido para restaurar velocidades de lectura/escritura sostenidas.
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-secondary" onclick="runDryRunAction('storage_trim')">Vista Previa</button>
+              <button class="btn btn-primary" onclick="applyCleanAction('storage_trim')">Ejecutar TRIM</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. DiagTrack Telemetry Suppression -->
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Supresión de Telemetría DiagTrack</div>
+                <div class="component-subtitle">Connected User Experiences</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal">Privacidad / CPU</span>
+          </div>
+          <div class="card-content">
+            <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">
+              Detiene y deshabilita el servicio DiagTrack para erradicar peticiones en segundo plano y caídas de rendimiento.
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-secondary" onclick="runDryRunAction('disable_diagtrack')">Vista Previa</button>
+              <button class="btn btn-primary" onclick="applyCleanAction('disable_diagtrack')">Desactivar Servicio</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. Disable Start Menu Bing Search -->
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Búsqueda 100% Local (Sin Bing)</div>
+                <div class="component-subtitle">HKCU\Search\BingSearchEnabled</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal">Respuesta Instantánea</span>
+          </div>
+          <div class="card-content">
+            <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">
+              Elimina consultas HTTP hacia servidores Bing al buscar archivos o programas, haciendo el Menú Inicio instantáneo.
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-secondary" onclick="runDryRunAction('disable_bing_search')">Vista Previa</button>
+              <button class="btn btn-primary" onclick="applyCleanAction('disable_bing_search')">Fijar Búsqueda Local</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. Disable Edge Background Boost -->
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Suspensión de Procesos Edge</div>
+                <div class="component-subtitle">StartupBoost & BackgroundMode</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal">Libera ~450 MB RAM</span>
+          </div>
+          <div class="card-content">
+            <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">
+              Impide que Microsoft Edge mantenga procesos en ejecución tras cerrarse, devolviendo la memoria RAM a los juegos.
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="btn btn-secondary" onclick="runDryRunAction('disable_edge_boost')">Vista Previa</button>
+              <button class="btn btn-primary" onclick="applyCleanAction('disable_edge_boost')">Bloquear Procesos</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: AUDITORÍA DE SEGURIDAD & PROCESOS -->
+    <div id="pane-security" class="view-pane">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:0.85rem; font-weight:700; color:var(--text);">Auditoría Heurística de Memoria y Autoruns</span>
+        <button class="btn btn-cyan" onclick="runLiveSecurityScan()">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Ejecutar Auditoría Heurística Completa
+        </button>
+      </div>
+
+      <div class="bento-grid" id="securityBentoGrid">
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Protección Antivirus & Firmas</div>
+                <div class="component-subtitle">Windows Defender Engine</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal" id="secStatusChip">Protegido</span>
+          </div>
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label">Protección en Tiempo Real</span>
+              <span class="telemetry-val" style="color:var(--optimal-text)">Activa</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label">Antigüedad de Firmas</span>
+              <span class="telemetry-val">0 días (Al día)</span>
+            </div>
+            <button class="btn btn-secondary" style="margin-top:8px;" onclick="triggerFolderOpen('security')">
+              Abrir Seguridad de Windows ↗
+            </button>
+          </div>
+        </div>
+
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Auditoría Heurística de Memoria</div>
+                <div class="component-subtitle">Procesos en Temp / Downloads</div>
+              </div>
+            </div>
+            <span class="status-chip chip-optimal" id="secProcChip">Sin Anomalías</span>
+          </div>
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label">Ejecutables en Carpetas Temp</span>
+              <span class="telemetry-val" id="secProcVal">0 detectados</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label">Rutas de Ejecución</span>
+              <span class="telemetry-val">100% de confianza</span>
+            </div>
+            <button class="btn btn-secondary" style="margin-top:8px;" onclick="triggerFolderOpen('temp')">
+              Inspeccionar Carpeta Temp ↗
+            </button>
+          </div>
+        </div>
+
+        <div class="bento-card">
+          <div class="card-top">
+            <div class="card-meta">
+              <div class="component-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              </div>
+              <div>
+                <div class="component-title">Puertos de Red & Escucha</div>
+                <div class="component-subtitle">Sockets TCP / Conexiones</div>
+              </div>
+            </div>
+            <span class="status-chip chip-neutral" id="secPortChip">Auditado</span>
+          </div>
+          <div class="card-content">
+            <div class="telemetry-row">
+              <span class="telemetry-label">Puertos TCP en Escucha</span>
+              <span class="telemetry-val" id="secPortVal">25 puertos locales</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="telemetry-label">Servicios no identificados</span>
+              <span class="telemetry-val">0</span>
+            </div>
+            <button class="btn btn-secondary" style="margin-top:8px;" onclick="triggerFolderOpen('taskmgr')">
+              Abrir Monitor de Recursos ↗
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN A: TELEMETRÍA DE PROCESOS EN TIEMPO REAL & SCORE DE SOSPECHA -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <svg style="width:16px; height:16px; stroke:var(--primary); fill:none; stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span>Telemetría de Procesos & Score de Sospecha (0-100)</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">Análisis de rutas no confiables, Process Hollowing e integridad Authenticode.</span>
+          </div>
+          <button class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px;" onclick="loadProcessTelemetry()">Actualizar Procesos ↻</button>
+        </div>
+        <div id="processTelemetryList" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto;">
+          <div style="font-size:0.78rem; color:var(--text-dim); text-align:center; padding:16px;">Presiona "Ejecutar Auditoría Heurística" o "Actualizar Procesos" para inspeccionar la memoria.</div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN B: AUDITORÍA DE PERSISTENCIA Y CAZA DE VIRUS -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <svg style="width:16px; height:16px; stroke:var(--warning-text); fill:none; stroke-width:2;" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              <span>Auditoría de Persistencia & Autoruns (Eliminación de Virus Profunda)</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">Claves Run/RunOnce, secuestro de Winlogon (Shell/Userinit), IFEO y archivo Hosts.</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary" style="font-size:0.72rem; padding:4px 8px;" onclick="remediateSecurityAction('clean_hosts')">Limpiar Hosts</button>
+            <button class="btn btn-secondary" style="font-size:0.72rem; padding:4px 8px;" onclick="remediateSecurityAction('restore_winlogon')">Restaurar Winlogon</button>
+            <button class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px;" onclick="loadPersistenceAudit()">Escanear Persistencias ↻</button>
+          </div>
+        </div>
+        <div id="persistenceItemsList" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;">
+          <div style="font-size:0.78rem; color:var(--text-dim); text-align:center; padding:16px;">Haz clic en "Escanear Persistencias" para analizar claves de inicio de Windows.</div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN D: ANTI-TAMPERING SENTRY (INTEGRIDAD DE DRIVERS Y SYSTEM32) -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <svg style="width:16px; height:16px; stroke:var(--optimal-text); fill:none; stroke-width:2;" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>Monitor de Integridad del Sistema (Anti-Tampering Sentry)</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">Monitoreo kernel asíncrono con ReadDirectoryChangesW en System32 y Controladores de Drivers.</span>
+          </div>
+          <button class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px;" onclick="loadTamperAlerts()">Ver Alertas ↻</button>
+        </div>
+        <div id="antiTamperAlertsList" style="display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto;">
+          <div style="font-size:0.78rem; color:var(--optimal-text); text-align:center; padding:12px;">✓ Sentry activo en segundo plano. No se han detectado inyecciones en drivers ni System32.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: 1-CLICK OPERATIONAL MODES -->
+    <div id="pane-modes" class="view-pane">
+      <div class="modes-deck">
+        <div class="mode-box" onclick="applyMasterMode('gamer')">
+          <div>
+            <div class="mode-box-header">
+              <div class="mode-box-icon">
+                <svg viewBox="0 0 24 24"><path d="M6 12h4m-2-2v4m10-2h.01m-3-2h.01M6 6h12a4 4 0 014 4v4a4 4 0 01-4 4H6a4 4 0 01-4-4v-4a4 4 0 014-4z"/></svg>
+              </div>
+              <div class="mode-box-title" data-i18n="mode_gamer_title">Modo Gamer (Baja Latencia)</div>
+            </div>
+            <div class="mode-box-desc" style="margin-top:10px;" data-i18n="mode_gamer_desc">
+              Prioriza subprocesos del juego en primer plano, anula la captura en búfer de GameDVR y reduce interrupciones de Windows.
+            </div>
+          </div>
+          <div class="mode-box-action" data-i18n="apply_config">Aplicar Configuración &rarr;</div>
+        </div>
+
+        <div class="mode-box" onclick="applyMasterMode('unity')">
+          <div>
+            <div class="mode-box-header">
+              <div class="mode-box-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2l10 6.5v7L12 22 2 15.5v-7L12 2zM12 12l10-4.5M12 12v10M12 12L2 7.5"/></svg>
+              </div>
+              <div class="mode-box-title" data-i18n="mode_unity_title">Modo Unity & Desarrollo</div>
+            </div>
+            <div class="mode-box-desc" style="margin-top:10px;" data-i18n="mode_unity_desc">
+              Configura compilación paralela de C# Roslyn sobre los 16 hilos del procesador y optimiza cachés de GI en unidades NVMe.
+            </div>
+          </div>
+          <div class="mode-box-action" data-i18n="apply_config">Aplicar Configuración &rarr;</div>
+        </div>
+
+        <div class="mode-box" onclick="applyMasterMode('ai')">
+          <div>
+            <div class="mode-box-header">
+              <div class="mode-box-icon">
+                <svg viewBox="0 0 24 24"><path d="M9.5 2A2.5 2.5 0 0112 4.5v15a2.5 2.5 0 01-4.96.44 2.5 2.5 0 01-2.96-3.08 3 3 0 01-.34-5.58 2.5 2.5 0 011.32-4.24 2.5 2.5 0 014.44-2.04zM14.5 2A2.5 2.5 0 0012 4.5v15a2.5 2.5 0 004.96.44 2.5 2.5 0 002.96-3.08 3 3 0 00.34-5.58 2.5 2.5 0 00-1.32-4.24 2.5 2.5 0 00-4.44-2.04z"/></svg>
+              </div>
+              <div class="mode-box-title" data-i18n="mode_ai_title">Modo IA & PyTorch</div>
+            </div>
+            <div class="mode-box-desc" style="margin-top:10px;" data-i18n="mode_ai_desc">
+              Purga bloques fragmentados de memoria RAM para datasets y alinea las colas de transferencia hacia tensores CUDA.
+            </div>
+          </div>
+          <div class="mode-box-action" data-i18n="apply_config">Aplicar Configuración &rarr;</div>
+        </div>
+
+        <div class="mode-box" onclick="applyMasterMode('potato')">
+          <div>
+            <div class="mode-box-header">
+              <div class="mode-box-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg>
+              </div>
+              <div class="mode-box-title" data-i18n="mode_potato_title">Modo Hardware Limitado</div>
+            </div>
+            <div class="mode-box-desc" style="margin-top:10px;" data-i18n="mode_potato_desc">
+              Atenúa sombras y animaciones del escritorio y activa la compresión inteligente de memoria RAM para PCs antiguas.
+            </div>
+          </div>
+          <div class="mode-box-action" data-i18n="apply_config">Aplicar Configuración &rarr;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: DPC OSCILLOSCOPE -->
+    <div id="pane-telemetry" class="view-pane">
+      <div class="oscilloscope-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span data-i18n="oscilloscope_title">Monitoreo en Tiempo Real: Latencia DPC & Jitter de Interrupciones</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="font-family:ui-monospace, monospace; font-size:0.82rem; color:var(--optimal-text);" id="dpcStatusLabel">
+              Status: Nominal (&lt; 1000 µs)
+            </div>
+            <button class="btn btn-secondary" style="font-size:0.72rem; padding:3px 8px;" onclick="resetDpcPeak()">Reiniciar Pico</button>
+          </div>
+        </div>
+
+        <div class="canvas-box" style="height: 210px; position: relative; background:#0c0d12; border: 1px solid var(--border-subtle); border-radius: 6px; overflow:hidden;">
+          <canvas id="dpcCanvas" style="display:block; width:100%; height:100%;"></canvas>
+        </div>
+
+        <!-- Telemetry Breakdown Cards Grid -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px;">
+          <div style="background:var(--surface-subtle); padding:12px 14px; border-radius:6px; border:1px solid var(--border-subtle);">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Jitter DPC Instantáneo</div>
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span style="font-size:1.35rem; font-weight:700; font-family:ui-monospace, monospace; color:var(--primary);" id="scopeLiveVal">0.0 µs</span>
+              <span class="status-chip chip-optimal" id="scopeLiveChip" style="font-size:0.65rem;">ÓPTIMO</span>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:4px;">Retardo de ejecución diferida de drivers</div>
+          </div>
+
+          <div style="background:var(--surface-subtle); padding:12px 14px; border-radius:6px; border:1px solid var(--border-subtle);">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Pico Máximo en Sesión</div>
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span style="font-size:1.35rem; font-weight:700; font-family:ui-monospace, monospace; color:var(--text-bright);" id="scopePeakVal">0.0 µs</span>
+              <span style="font-size:0.72rem; color:var(--text-dim);" id="scopePeakThreshold">&lt; 1000 µs seguro</span>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:4px;">Mayor latencia registrada desde el inicio</div>
+          </div>
+
+          <div style="background:var(--surface-subtle); padding:12px 14px; border-radius:6px; border:1px solid var(--border-subtle);">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Resolución del Timer de Windows</div>
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span style="font-size:1.35rem; font-weight:700; font-family:ui-monospace, monospace; color:var(--optimal-text);" id="scopeTimerVal">0.500 ms</span>
+              <span class="status-chip chip-optimal" style="font-size:0.65rem;">timeBeginPeriod</span>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:4px;">Tickrate del planificador de hilos</div>
+          </div>
+
+          <div style="background:var(--surface-subtle); padding:12px 14px; border-radius:6px; border:1px solid var(--border-subtle);">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Aptitud para Gaming & Audio en Vivo</div>
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span style="font-size:1.15rem; font-weight:700; color:var(--optimal-text);" id="scopeReadinessVal">Excelente (Sin Stutter)</span>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-dim); margin-top:4px;">Tasa de caída de frames proyectada: 0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: AUDIT -->
+    <div id="pane-audit" class="view-pane">
+      <div class="bento-card">
+        <div class="component-title" style="margin-bottom:8px;" data-i18n="audit_title">Registro de Eventos y Diagnóstico Forense</div>
+        <div style="font-size:0.82rem; color:var(--text-muted); line-height:1.6;">
+          • [nvlddmkm ID 153]: 448 eventos de caída por Timeout Detection and Recovery (TDR) en GPUID 100.<br>
+          • [Kernel-Power ID 41]: 18 eventos de corte súbito de alimentación registrados en 48 horas.<br>
+          • [Win32_PhysicalMemory]: Módulos AORUS DDR4 trabajando a 2666 MHz de los 3200 MHz especificados.<br>
+          • [Windows Defender]: Protección en tiempo real activa. Firmas de virus actualizadas (0 días).
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button class="btn btn-secondary" onclick="triggerFolderOpen('eventvwr')">Abrir Visor de Eventos de Windows ↗</button>
+          <button class="btn btn-secondary" onclick="triggerFolderOpen('minidump')">Abrir Carpeta Minidumps ↗</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Persistent Grounded App Footer -->
+  <footer style="margin-top:auto; background:var(--surface); border-top:1px solid var(--border); padding:10px 32px; display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-dim); width:100%; box-sizing:border-box; user-select:none;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="status-dot"></span>
+      <span>ClarityPC v1.0.0 Stable • Núcleo Windows x64 • Cero Telemetría Externa (100% Privado)</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <span>Auto-TDR Guard: Activo</span>
+      <span>•</span>
+      <span>Temporizador: 0.5 ms</span>
+      <span>•</span>
+      <span>Modo UAC: Elevado</span>
+    </div>
+  </footer>
+
+  <!-- MODAL: ASISTENTE DE SOLUCIÓN TÉCNICA -->
+  <div class="modal-backdrop" id="surgeryModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 data-i18n="modal_surgery_title">Asistente de Corrección de Hardware</h3>
+        <button class="close-btn" onclick="closeSurgeryModal()">&times;</button>
+      </div>
+
+      <div style="font-size:0.83rem; color:var(--text-muted); line-height:1.5; margin-bottom:14px;" data-i18n="modal_surgery_desc">
+        Se han aislado dos causas físicas principales de inestabilidad y pérdida de rendimiento en tu equipo:
+      </div>
+
+      <div class="modal-step">
+        <div style="font-size:0.83rem; font-weight:700; color:var(--danger-text); margin-bottom:4px;" data-i18n="modal_gpu_title">
+          1. Estabilización de Tarjeta Gráfica (RTX 3060)
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.45; margin-bottom:10px;" data-i18n="modal_gpu_desc">
+          La gráfica colapsa al intentar conmutar al estado 3D de 170W. Limitar el consumo a 100W y fijar el reloj a 1350 MHz previene el disparo de protección hasta que sea reparada en laboratorio.
+        </p>
+        <button class="btn btn-secondary" onclick="toggleGpuEmergency()" data-i18n="modal_gpu_btn">
+          Aplicar Límite Preventivo (100W / 1350 MHz)
+        </button>
+      </div>
+
+      <div class="modal-step">
+        <div style="font-size:0.83rem; font-weight:700; color:var(--warning-text); margin-bottom:4px;" data-i18n="modal_xmp_title">
+          2. Activación de Perfil XMP en Firmware Gigabyte Z490
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.45; margin-bottom:8px;" data-i18n="modal_xmp_desc">
+          Tus memorias están trabajando a 2666 MHz en lugar de sus 3200 MHz nominales. Sigue este procedimiento:
+        </p>
+        <ol style="font-size:0.74rem; color:var(--text-muted); margin-left:16px; line-height:1.6;">
+          <li>Presiona el botón inferior para reiniciar directo al firmware.</li>
+          <li>En la pantalla de BIOS, pulsa <span class="key-badge">F2</span> para ingresar a <strong>Advanced Mode</strong>.</li>
+          <li>Accede a la pestaña <strong>Tweaker</strong> y localiza <strong>Extreme Memory Profile (X.M.P.)</strong>.</li>
+          <li>Cambia el valor de <em>Disabled</em> a <strong style="color:var(--text)">Profile 1</strong>.</li>
+          <li>Pulsa <span class="key-badge">F10</span> para guardar y reiniciar.</li>
+        </ol>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="closeSurgeryModal()" data-i18n="btn_close">Cerrar</button>
+        <button class="btn btn-primary" onclick="executeRebootUefi()" data-i18n="btn_reboot_uefi">Reiniciar en Firmware UEFI</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TEST DE INTEGRIDAD DE VRAM (15s) -->
+  <div class="modal-backdrop" id="vramModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 data-i18n="modal_vram_title">Test de Integridad de Memoria VRAM</h3>
+        <button class="close-btn" onclick="closeVramModal()">&times;</button>
+      </div>
+
+      <div style="font-size:0.83rem; color:var(--text-muted); line-height:1.5; margin-bottom:14px;" data-i18n="modal_vram_desc">
+        Asigna bloques directos en la tarjeta gráfica para escribir y verificar patrones binarios de comprobación de paridad. Detecta micro-fracturas o celdas degradadas de VRAM sin riesgo.
+      </div>
+
+      <div class="modal-step">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:0.82rem; font-weight:700;" id="vramDeviceText">Dispositivo: NVIDIA GeForce RTX 3060</span>
+          <span class="status-chip optimal" id="vramStatusChip">Listo</span>
+        </div>
+        <div class="vram-progress-bar">
+          <div class="vram-progress-fill" id="vramProgressFill"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-dim);" id="vramProgressText">
+          <span id="vramPctText">Progreso: 0%</span>
+          <span id="vramErrorsText">Errores de bit: 0</span>
+        </div>
+        <div style="margin-top:10px; font-size:0.78rem; color:var(--text-muted);" id="vramMsgText">
+          Presiona "Iniciar Test de VRAM" para comenzar.
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="closeVramModal()" data-i18n="btn_close">Cerrar</button>
+        <button class="btn btn-primary" id="btnStartVram" onclick="runVramTest()" data-i18n="btn_start_vram">Iniciar Test de VRAM (15s)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: OPTIMIZADOR DE LATENCIA DE JUEGOS -->
+  <div class="modal-backdrop" id="gameModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 data-i18n="modal_game_title">Optimizador de Latencia por Juego</h3>
+        <button class="close-btn" onclick="closeGameModal()">&times;</button>
+      </div>
+
+      <div style="font-size:0.83rem; color:var(--text-muted); line-height:1.5; margin-bottom:12px;" data-i18n="modal_game_desc">
+        Fija la resolución del temporizador de Windows a 0.5 ms / 1.0 ms (timeBeginPeriod) y eleva la prioridad de subprocesos del juego en ejecución para eliminar micro-tirones.
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-subtle); padding:10px 14px; border-radius:6px; margin-bottom:12px; border:1px solid var(--border-subtle);">
+        <span style="font-size:0.8rem; font-weight:600;">Temporizador Global de Windows:</span>
+        <span class="status-chip optimal" id="timerStatusChip">1.0 ms (Alta Precisión)</span>
+      </div>
+
+      <div id="gameListContainer" style="display:flex; flex-direction:column; gap:8px; max-height:240px; overflow-y:auto;">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="loadRunningGames()">Actualizar Juegos ↻</button>
+        <button class="btn btn-secondary" onclick="closeGameModal()" data-i18n="btn_close">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ÍNDICE DE SALUD GLOBAL DEL PC -->
+  <div class="modal-backdrop" id="healthModal">
+    <div class="modal-card" style="max-width: 650px;">
+      <div class="modal-head">
+        <h3 data-i18n="modal_health_title">Índice de Salud Global del PC</h3>
+        <button class="close-btn" onclick="closeHealthModal()">&times;</button>
+      </div>
+
+      <div class="health-overview">
+        <div class="health-gauge-badge" id="healthGaugeBadge">
+          <span class="health-score-num" id="healthScoreBig">--</span>
+          <span class="health-score-max">/ 100</span>
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <span class="status-chip chip-critical" id="healthVerdictBadge">Analizando...</span>
+          </div>
+          <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;" data-i18n="health_overview_desc">
+            Evaluación forense holística en tiempo real basada en hardware, controladores y estabilidad eléctrica.
+          </p>
+        </div>
+      </div>
+
+      <div style="font-size:0.8rem; font-weight:700; color:var(--text); margin-bottom:8px;" data-i18n="health_penalties_title">
+        Deducciones y Factores de Riesgo Activos:
+      </div>
+      <div id="healthPenaltiesList" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div class="health-potential-box">
+        <div>
+          <strong data-i18n="health_potential_title">Puntuación Proyectada con ClarityPC:</strong>
+          <span style="color:var(--text-muted); display:block; font-size:0.72rem;" data-i18n="health_potential_desc">Aplicando límites de consumo seguros y purgando sombreadores corruptos.</span>
+        </div>
+        <div style="font-size:1.15rem; font-weight:800; color:var(--optimal-text);" id="healthPotentialScore">98 / 100</div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+        <button class="btn btn-primary" onclick="closeHealthModal(); openSurgeryModal();" data-i18n="btn_apply_fixes">Aplicar Correcciones Preventivas</button>
+        <button class="btn btn-secondary" onclick="closeHealthModal()" data-i18n="btn_close">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIGURACIÓN GLOBAL / SETTINGS -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-head">
+        <h3 data-i18n="modal_settings_title">Configuración de ClarityPC</h3>
+        <button class="close-btn" onclick="closeSettingsModal()">&times;</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <!-- 1. Autostart HKCU Run -->
+        <div class="setting-row">
+          <div class="setting-meta">
+            <span class="setting-title" data-i18n="setting_autostart_title">Inicio Automático con Windows</span>
+            <span class="setting-desc" data-i18n="setting_autostart_desc">Sincroniza con el registro HKCU\Run para ejecutar ClarityPC en segundo plano.</span>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" id="cfgAutostart">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 2. Auto-TDR Guard Watchdog -->
+        <div class="setting-row">
+          <div class="setting-meta">
+            <span class="setting-title" data-i18n="setting_watchdog_title">Auto-TDR Guard Watchdog</span>
+            <span class="setting-desc" data-i18n="setting_watchdog_desc">Monitorea Kernel-Power 41 y TDR 153 para mitigar colapsos de GPU automáticamente.</span>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" id="cfgWatchdog">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. High Precision Timer Boost -->
+        <div class="setting-row">
+          <div class="setting-meta">
+            <span class="setting-title" data-i18n="setting_timer_title">Temporizador de Alta Precisión</span>
+            <span class="setting-desc" data-i18n="setting_timer_desc">Fija la resolución global de Windows a 1.0 ms (timeBeginPeriod) para partidas fluidas.</span>
+          </div>
+          <div class="setting-control">
+            <label class="toggle-switch">
+              <input type="checkbox" id="cfgTimerBoost">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 4. Safe GPU Wattage -->
+        <div class="setting-row">
+          <div class="setting-meta">
+            <span class="setting-title" data-i18n="setting_gpu_watts_title">Potencia Segura de GPU (Vatios)</span>
+            <span class="setting-desc" data-i18n="setting_gpu_watts_desc">Tope de vatios en modo preventivo (recomendado: 100W para RTX 3060).</span>
+          </div>
+          <div class="setting-control">
+            <input type="number" id="cfgGpuWatts" min="70" max="170" step="5" style="width:75px; text-align:center;" value="100">
+          </div>
+        </div>
+
+        <!-- 5. Theme -->
+        <div class="setting-row">
+          <div class="setting-meta">
+            <span class="setting-title" data-i18n="setting_theme_title">Tema de Interfaz</span>
+            <span class="setting-desc" data-i18n="setting_theme_desc">Selecciona entre la paleta oscura OLED o clara de alto contraste.</span>
+          </div>
+          <div class="setting-control">
+            <select id="cfgTheme">
+              <option value="dark">Oscuro (Dark OLED)</option>
+              <option value="light">Claro (Clean Light)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 6. Language -->
+        <div class="setting-row">
+          <div class="setting-meta">
+            <span class="setting-title" data-i18n="setting_lang_title">Idioma de la Interfaz</span>
+            <span class="setting-desc" data-i18n="setting_lang_desc">Cambia el idioma global entre Español e Inglés.</span>
+          </div>
+          <div class="setting-control">
+            <select id="cfgLang">
+              <option value="es">Español (ES)</option>
+              <option value="en">English (EN)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeSettingsModal()" data-i18n="btn_close">Cerrar</button>
+        <button class="btn btn-primary" onclick="saveSettings()" data-i18n="btn_save_settings">Guardar Configuración</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    let gpuEmergencyActive = false;
+    let isTourRunning = false;
+    let currentOpenTarget = "minidump";
+    let currentLang = "es";
+
+    // Internationalization (i18n) dictionary
+    const translations = {
+      es: {
+        top_dpc: "Jitter DPC:",
+        byte_title: "Byte — Copiloto Técnico Minimalista",
+        byte_intro: "Presiona <strong>\"Iniciar Auditoría Asistida\"</strong> para que Byte recorra el sistema, abra carpetas críticas de Windows en pantalla y te explique en vivo cada registro forense.",
+        btn_start_tour: "Iniciar Auditoría Asistida con Byte",
+        open_native_explorer: "Abrir en Explorador Real ↗",
+        btn_scan: "Escanear Sistema",
+        btn_assisted_mode: "Modo Asistido (XMP / GPU)",
+        btn_gpu_cap: "Límite Seguro GPU (100W)",
+        btn_export_pdf: "Exportar Informe PDF",
+        btn_reboot_uefi: "Reiniciar en UEFI",
+        btn_vram_test: "Test VRAM (15s)",
+        btn_game_boost: "Optimizar Juego",
+        btn_forum_report: "Reporte Foros",
+        modal_vram_title: "Test de Integridad de Memoria VRAM",
+        modal_vram_desc: "Asigna bloques directos en la tarjeta gráfica para escribir y verificar patrones binarios de comprobación de paridad. Detecta micro-fracturas o celdas degradadas de VRAM sin riesgo.",
+        btn_start_vram: "Iniciar Test de VRAM (15s)",
+        modal_game_title: "Optimizador de Latencia por Juego",
+        modal_game_desc: "Fija la resolución del temporizador de Windows a 0.5 ms / 1.0 ms (timeBeginPeriod) y eleva la prioridad de subprocesos del juego en ejecución para eliminar micro-tirones.",
+        lbl_cpu: "Procesador (CPU)",
+        lbl_ram: "Memoria RAM",
+        lbl_gpu: "Tarjeta Gráfica (GPU)",
+        lbl_stability: "Estado de Estabilidad",
+        val_attention: "Atención Requerida",
+        tab_topology: "Topología de Hardware",
+        tab_cleaner: "Higiene y Limpieza Profunda",
+        tab_security: "Auditoría de Seguridad & Procesos",
+        tab_modes: "Perfiles de 1 Clic",
+        tab_telemetry: "Latencia DPC en Vivo",
+        tab_audit: "Registros Forenses",
+        card_cpu_title: "Procesador (CPU)",
+        chip_optimal: "Óptimo",
+        chip_bottleneck: "Cuello de Botella",
+        chip_critical: "Falla Crítica",
+        chip_verified: "Verificado",
+        chip_health_100: "Salud 100%",
+        chip_unstable: "Inestable",
+        cpu_cores: "Configuración",
+        cpu_clocks: "Frecuencia Base / Turbo",
+        cpu_igpu: "Gráfica Integrada",
+        cpu_absent: "Ausente (KF)",
+        card_ram_title: "Memoria RAM",
+        ram_current: "Frecuencia Configurada",
+        ram_rated: "Frecuencia Nominal (XMP)",
+        ram_alert: "<strong>Pérdida de ancho de banda: -17%.</strong> XMP desactivado en firmware BIOS.",
+        card_gpu_title: "Tarjeta Gráfica (GPU)",
+        gpu_driver: "Controlador",
+        gpu_tdr: "Cuelgues TDR Registrados",
+        gpu_alert: "<strong>Inestabilidad en 3D (P0):</strong> Colapso inmediato de tensión/VRAM al superar 16W.",
+        card_board_title: "Placa Base & Firmware",
+        board_bios: "Versión de BIOS",
+        board_secboot: "Arranque Seguro",
+        board_pcie: "Interfaz Bus PCIe",
+        val_disabled: "Desactivado",
+        card_storage_title: "Almacenamiento NVMe",
+        storage_trim: "Mantenimiento TRIM",
+        val_optimized: "Optimizado (278 GB)",
+        storage_free: "Espacio Libre C:",
+        card_psu_title: "Suministro Eléctrico / PSU",
+        psu_kp41: "Reinicios Kernel-Power 41",
+        psu_plan: "Plan de Energía",
+        val_ultimate: "Máximo Rendimiento",
+        psu_alert: "<strong>Protección OCP/UVP disparada:</strong> Caída repentina de tensión al subir la GPU a 170W.",
+        mode_gamer_title: "Modo Gamer (Baja Latencia)",
+        mode_gamer_desc: "Prioriza subprocesos del juego en primer plano, anula la captura en búfer de GameDVR y reduce interrupciones de Windows.",
+        mode_unity_title: "Modo Unity & Desarrollo",
+        mode_unity_desc: "Configura compilación paralela de C# Roslyn sobre los 16 hilos del procesador y optimiza cachés de GI en unidades NVMe.",
+        mode_ai_title: "Modo IA & PyTorch",
+        mode_ai_desc: "Purga bloques fragmentados de memoria RAM para datasets y alinea las colas de transferencia hacia tensores CUDA.",
+        mode_potato_title: "Modo Hardware Limitado",
+        mode_potato_desc: "Atenúa sombras y animaciones del escritorio y activa la compresión inteligente de memoria RAM para PCs antiguas.",
+        apply_config: "Aplicar Configuración →",
+        oscilloscope_title: "Monitoreo en Tiempo Real: Latencia DPC & Jitter de Interrupciones",
+        audit_title: "Registro de Eventos y Diagnóstico Forense",
+        top_health: "Salud:",
+        modal_health_title: "Índice de Salud Global del PC",
+        health_overview_desc: "Evaluación forense holística en tiempo real basada en hardware, controladores y estabilidad eléctrica.",
+        health_penalties_title: "Deducciones y Factores de Riesgo Activos:",
+        health_potential_title: "Puntuación Proyectada con ClarityPC:",
+        health_potential_desc: "Aplicando límites de consumo seguros y purgando sombreadores corruptos.",
+        modal_settings_title: "Configuración de ClarityPC",
+        setting_autostart_title: "Inicio Automático con Windows",
+        setting_autostart_desc: "Sincroniza con el registro HKCU\\Run para ejecutar ClarityPC en segundo plano.",
+        setting_watchdog_title: "Auto-TDR Guard Watchdog",
+        setting_watchdog_desc: "Monitorea Kernel-Power 41 y TDR 153 para mitigar colapsos de GPU automáticamente.",
+        setting_timer_title: "Temporizador de Alta Precisión",
+        setting_timer_desc: "Fija la resolución global de Windows a 1.0 ms (timeBeginPeriod) para partidas fluidas.",
+        setting_gpu_watts_title: "Potencia Segura de GPU (Vatios)",
+        setting_gpu_watts_desc: "Tope de vatios en modo preventivo (recomendado: 100W para RTX 3060).",
+        setting_theme_title: "Tema de Interfaz",
+        setting_theme_desc: "Selecciona entre la paleta oscura OLED o clara de alto contraste.",
+        setting_lang_title: "Idioma de la Interfaz",
+        setting_lang_desc: "Cambia el idioma global entre Español e Inglés.",
+        btn_save_settings: "Guardar Configuración",
+        btn_apply_fixes: "Aplicar Correcciones Preventivas",
+        tour_open_real: "Abrir carpetas reales de Windows en pantalla",
+        btn_close: "Cerrar"
+      },
+      en: {
+        top_dpc: "DPC Jitter:",
+        byte_title: "Byte — Minimalist Technical Copilot",
+        byte_intro: "Click <strong>\"Start Assisted Audit\"</strong> to have Byte inspect the system, open critical Windows folders on-screen and explain each forensic log in real-time.",
+        btn_start_tour: "Start Assisted Audit with Byte",
+        open_native_explorer: "Open in Real Explorer ↗",
+        btn_scan: "Scan System",
+        btn_assisted_mode: "Assisted Mode (XMP / GPU)",
+        btn_gpu_cap: "Safe GPU Cap (100W)",
+        btn_export_pdf: "Export PDF Report",
+        btn_reboot_uefi: "Reboot to UEFI",
+        btn_vram_test: "VRAM Test (15s)",
+        btn_game_boost: "Game Optimizer",
+        btn_forum_report: "Forum Report",
+        modal_vram_title: "VRAM Memory Integrity Test",
+        modal_vram_desc: "Directly allocates GPU memory blocks to write and verify binary parity patterns. Safely detects micro-fractures or degraded VRAM cells.",
+        btn_start_vram: "Start VRAM Test (15s)",
+        modal_game_title: "Per-Game Latency Optimizer",
+        modal_game_desc: "Locks Windows global timer resolution to 0.5 ms / 1.0 ms (timeBeginPeriod) and raises game thread priority to eliminate micro-stutters.",
+        lbl_cpu: "Processor (CPU)",
+        lbl_ram: "RAM Memory",
+        lbl_gpu: "Graphics Card (GPU)",
+        lbl_stability: "Stability Status",
+        val_attention: "Attention Required",
+        tab_topology: "Hardware Topology",
+        tab_cleaner: "Deep Cleaning & Hygiene",
+        tab_security: "Security & Process Audit",
+        tab_modes: "1-Click Profiles",
+        tab_telemetry: "Live DPC Latency",
+        tab_audit: "Forensic Logs",
+        card_cpu_title: "Processor (CPU)",
+        chip_optimal: "Optimal",
+        chip_bottleneck: "Bottleneck",
+        chip_critical: "Critical Fault",
+        chip_verified: "Verified",
+        chip_health_100: "Health 100%",
+        chip_unstable: "Unstable",
+        cpu_cores: "Cores & Threads",
+        cpu_clocks: "Base / Turbo Clock",
+        cpu_igpu: "Integrated GPU",
+        cpu_absent: "None (KF)",
+        card_ram_title: "RAM Memory",
+        ram_current: "Configured Frequency",
+        ram_rated: "Rated Frequency (XMP)",
+        ram_alert: "<strong>Bandwidth Loss: -17%.</strong> XMP disabled in BIOS firmware.",
+        card_gpu_title: "Graphics Card (GPU)",
+        gpu_driver: "Display Driver",
+        gpu_tdr: "Recorded TDR Resets",
+        gpu_alert: "<strong>3D State Instability (P0):</strong> Immediate voltage collapse when exceeding 16W.",
+        card_board_title: "Motherboard & Firmware",
+        board_bios: "BIOS Version",
+        board_secboot: "Secure Boot",
+        board_pcie: "PCIe Bus Link",
+        val_disabled: "Disabled",
+        card_storage_title: "NVMe Storage",
+        storage_trim: "TRIM Maintenance",
+        val_optimized: "Optimized (278 GB)",
+        storage_free: "Free Space C:",
+        card_psu_title: "Power Supply (PSU)",
+        psu_kp41: "Kernel-Power 41 Reboots",
+        psu_plan: "Power Scheme",
+        val_ultimate: "Ultimate Performance",
+        psu_alert: "<strong>OCP/UVP Protection Triggered:</strong> Sudden voltage sag when GPU ramps to 170W.",
+        mode_gamer_title: "Gamer Mode (Ultra-Low Latency)",
+        mode_gamer_desc: "Prioritizes foreground game threads, completely disables GameDVR buffer capture, and minimizes Windows interrupts.",
+        mode_unity_title: "Unity & Dev Mode",
+        mode_unity_desc: "Tunes parallel C# Roslyn compilation across all 16 threads and optimizes GI disk caches on NVMe drives.",
+        mode_ai_title: "AI & PyTorch Mode",
+        mode_ai_desc: "Flushes fragmented RAM blocks for large datasets and aligns host-to-device memory pipelines for CUDA tensors.",
+        mode_potato_title: "Constrained Hardware Mode",
+        mode_potato_desc: "Eliminates desktop animations and drop shadows while activating memory compression for legacy machines.",
+        apply_config: "Apply Settings →",
+        oscilloscope_title: "Real-Time Telemetry: DPC Latency & Interrupt Jitter",
+        audit_title: "Event Log & Forensic Diagnostics",
+        top_health: "Health:",
+        modal_health_title: "Global PC Health & Stability Index",
+        health_overview_desc: "Holistic real-time forensic evaluation based on hardware, display drivers, and power delivery.",
+        health_penalties_title: "Active Deductions & Risk Factors:",
+        health_potential_title: "Projected Score with ClarityPC:",
+        health_potential_desc: "Applying safe power limits and purging stale shader caches.",
+        modal_settings_title: "ClarityPC Settings",
+        setting_autostart_title: "Auto-Start with Windows",
+        setting_autostart_desc: "Syncs with the HKCU\\Run registry key to launch ClarityPC silently on startup.",
+        setting_watchdog_title: "Auto-TDR Guard Watchdog",
+        setting_watchdog_desc: "Actively monitors Kernel-Power 41 and TDR 153 to mitigate GPU crashes automatically.",
+        setting_timer_title: "High-Precision Timer Boost",
+        setting_timer_desc: "Locks Windows global timer resolution to 1.0 ms (timeBeginPeriod) for jitter-free gaming.",
+        setting_gpu_watts_title: "Safe GPU Power Target (Watts)",
+        setting_gpu_watts_desc: "Wattage ceiling in preventive mode (recommended: 100W for failing RTX 3060).",
+        setting_theme_title: "Interface Theme",
+        setting_theme_desc: "Select between OLED dark or high-contrast light theme.",
+        setting_lang_title: "Interface Language",
+        setting_lang_desc: "Switch global language between Spanish and English.",
+        btn_save_settings: "Save Settings",
+        btn_apply_fixes: "Apply Preventive Fixes",
+        tour_open_real: "Open real Windows folders on screen",
+        btn_close: "Close"
+      }
+    };
+
+    function toggleLanguage() {
+      currentLang = currentLang === "es" ? "en" : "es";
+      document.getElementById("btnLang").textContent = currentLang.toUpperCase();
+      applyLanguage(currentLang);
+    }
+
+    function applyLanguage(lang) {
+      const dict = translations[lang];
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (dict[key]) {
+          el.innerHTML = dict[key];
+        }
+      });
+    }
+
+    // Theme Switcher Logic
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+
+      document.getElementById('themeIconSun').style.display = next === 'light' ? 'block' : 'none';
+      document.getElementById('themeIconMoon').style.display = next === 'dark' ? 'block' : 'none';
+    }
+
+    function switchPane(paneId) {
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
+      const btn = Array.from(document.querySelectorAll('.tab-item')).find(b => b.getAttribute('onclick')?.includes(paneId));
+      if (btn) btn.classList.add('active');
+      const pane = document.getElementById(paneId);
+      if (pane) {
+        pane.classList.add('active');
+        if (paneId === 'pane-telemetry') {
+          setTimeout(resizeCanvas, 30);
+        }
+      }
+    }
+
+    // THEATER FOLDER SIMULATION STAGES
+    const deepTourStages = [
+      {
+        folderTitle: "Explorador de Windows — Volcados de Caída (BSOD)",
+        folderPath: "C:\\Windows\\Minidump",
+        openTarget: "minidump",
+        cardId: "card-gpu",
+        files: [
+          { name: "042226-11234-01.dmp", desc: "BugCheck 0x116: VIDEO_TDR_FAILURE (nvlddmkm.sys)", tag: "Crítico", color: "var(--danger-text)" },
+          { name: "042126-14812-01.dmp", desc: "BugCheck 0x133: DPC_WATCHDOG_VIOLATION", tag: "Crítico", color: "var(--danger-text)" }
+        ],
+        tourText: "Abriendo carpeta C:\\Windows\\Minidump... Aquí Windows guarda los volcados de memoria cuando ocurre un pantallazo azul (BSOD). He detectado fallos recurrentes en nvlddmkm.sys.",
+        bubble: "Minidump: 18 caídas por TDR"
+      },
+      {
+        folderTitle: "Explorador de Windows — Caché de Sombreadores DirectX",
+        folderPath: "%LOCALAPPDATA%\\NVIDIA\\DXCache",
+        openTarget: "dxcache",
+        cardId: "card-storage",
+        files: [
+          { name: "0a8b9f2c1.bin", desc: "DirectX 12 Shader Binaries (Driver 551.xx)", tag: "Obsoleto", color: "var(--warning-text)" },
+          { name: "dxcache_nv_index.toc", desc: "Tabla de contenidos de caché (1.2 GB)", tag: "Fragmentado", color: "var(--warning-text)" }
+        ],
+        tourText: "Inspeccionando cachés de sombreadores de NVIDIA y temporales... Se acumulan 1.2 GB de fragmentos de shaders antiguos que provocan tartamudeo (stuttering) en juegos.",
+        bubble: "DXCache: 1.2 GB acumulados"
+      },
+      {
+        folderTitle: "Visor de Eventos de Windows — Registros del Sistema",
+        folderPath: "eventvwr.msc > Registros de Windows > Sistema",
+        openTarget: "eventvwr",
+        cardId: "card-psu",
+        files: [
+          { name: "nvlddmkm Event ID 153", desc: "448 eventos: Caída de GPU al conmutar a 3D (170W)", tag: "448 Eventos", color: "var(--danger-text)" },
+          { name: "Kernel-Power Event ID 41", desc: "18 eventos: Apagados repentinos por corte de alimentación", tag: "18 Cortes", color: "var(--danger-text)" }
+        ],
+        tourText: "Examinando el Registro de Eventos del Sistema... Se confirman 448 reinicios del controlador gráfico y 18 cortes de alimentación Kernel-Power 41 en 48 horas.",
+        bubble: "Eventos: 448 TDRs / 18 KP41"
+      },
+      {
+        folderTitle: "Seguridad de Windows — Protección y Procesos",
+        folderPath: "Windows Security > Real-Time Monitoring",
+        openTarget: "security",
+        cardId: "card-cpu",
+        files: [
+          { name: "MsMpEng.exe", desc: "Protección en tiempo real de Windows Defender activa", tag: "Óptimo", color: "var(--optimal-text)" },
+          { name: "Procesos en Temp", desc: "0 ejecutables no firmados corriendo desde AppData o Temp", tag: "Seguro", color: "var(--optimal-text)" }
+        ],
+        tourText: "Auditando procesos en memoria RAM y sockets... No hay ejecutables no autorizados en carpetas temporales. La protección en tiempo real de Windows Defender está activa.",
+        bubble: "Seguridad: Todo en orden"
+      },
+      {
+        folderTitle: "Firmware de Placa Base — Bus de Memoria",
+        folderPath: "UEFI > Gigabyte Tweaker > Extreme Memory Profile",
+        openTarget: "minidump",
+        cardId: "card-ram",
+        files: [
+          { name: "DDR4 Channel A & B", desc: "Frecuencia actual: 2666 MHz | Frecuencia XMP de fábrica: 3200 MHz", tag: "-17% Ancho de Banda", color: "var(--warning-text)" }
+        ],
+        tourText: "Comprobando frecuencias de la memoria RAM... Tus módulos están limitados a 2666 MHz en lugar de sus 3200 MHz nominales. Tienes un 17% de cuello de botella.",
+        bubble: "RAM: Cuello de botella 17%"
+      }
+    ];
+
+    async function startDeepByteInspection() {
+      if (isTourRunning) return;
+      isTourRunning = true;
+
+      switchPane('pane-topology');
+
+      const theater = document.getElementById('folderTheater');
+      const theaterTitle = document.getElementById('folderTitleName');
+      const theaterPath = document.getElementById('folderPathText');
+      const filesList = document.getElementById('folderFilesList');
+      const roaming = document.getElementById('roamingCat');
+      const bubble = document.getElementById('roamingBubble');
+      const tourText = document.getElementById('tourText');
+      const badge = document.getElementById('tourStepBadge');
+
+      theater.style.display = 'block';
+      roaming.style.display = 'block';
+
+      for (let i = 0; i < deepTourStages.length; i++) {
+        const stage = deepTourStages[i];
+        currentOpenTarget = stage.openTarget;
+
+        // Render simulated folder
+        theaterTitle.textContent = stage.folderTitle;
+        theaterPath.textContent = stage.folderPath;
+        filesList.innerHTML = stage.files.map(f => `
+          <div class="file-item-row">
+            <div class="file-meta-name">
+              <svg style="width:14px; height:14px; stroke:var(--text-muted); fill:none; stroke-width:2;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6"/></svg>
+              <span>${f.name}</span>
+              <span style="color:var(--text-dim); font-size:0.72rem;">&bull; ${f.desc}</span>
+            </div>
+            <span class="status-chip" style="color:${f.color}; background:rgba(255,255,255,0.05);">${f.tag}</span>
+          </div>
+        `).join('');
+
+        // Highlight and focus affected bento card first
+        document.querySelectorAll('.bento-card').forEach(c => c.classList.remove('highlight-focus'));
+        const card = document.getElementById(stage.cardId);
+        if (card) {
+          card.classList.add('highlight-focus');
+          const cardRect = card.getBoundingClientRect();
+          const mainRect = document.querySelector('main').getBoundingClientRect();
+          const cardX = (cardRect.left - mainRect.left) + 20;
+          const cardY = (cardRect.top - mainRect.top) - 15;
+          roaming.style.left = `${cardX}px`;
+          roaming.style.top = `${cardY}px`;
+          bubble.textContent = `Auditando ${stage.cardId.replace('card-', '').toUpperCase()}...`;
+          await new Promise(r => setTimeout(r, 700));
+        }
+
+        // Open real Windows folder on desktop if requested by user
+        const autoOpen = document.getElementById('chkAutoOpenRealFolders')?.checked;
+        if (autoOpen && stage.openTarget) {
+          triggerFolderOpen(stage.openTarget);
+        }
+
+        // Move roaming cat to folder theater
+        const theaterRect = theater.getBoundingClientRect();
+        const mainRect = document.querySelector('main').getBoundingClientRect();
+        const targetX = (theaterRect.left - mainRect.left) + 20 + (i * 35);
+        const targetY = (theaterRect.top - mainRect.top) - 15;
+
+        roaming.style.left = `${targetX}px`;
+        roaming.style.top = `${targetY}px`;
+
+        bubble.textContent = stage.bubble;
+        tourText.textContent = stage.tourText;
+        badge.textContent = `Inspeccionando Etapa ${i + 1} de ${deepTourStages.length}`;
+
+        await new Promise(r => setTimeout(r, 2600));
+      }
+
+      // Finish tour
+      document.querySelectorAll('.bento-card').forEach(c => c.classList.remove('highlight-focus'));
+      roaming.style.display = 'none';
+      tourText.innerHTML = '¡Auditoría asistida completada! Puedes abrir cualquier carpeta real con los botones o ingresar al <strong>Modo Asistido</strong>.';
+      badge.textContent = 'Auditoría Finalizada';
+      isTourRunning = false;
+    }
+
+    async function triggerFolderOpen(target) {
+      currentOpenTarget = target;
+      await openNativeFolder();
+    }
+
+    async function openNativeFolder() {
+      try {
+        const res = await fetch(`/api/open-system-path?target=${currentOpenTarget}`);
+        const data = await res.json();
+        if (!data.success) {
+          alert('Error al abrir: ' + data.error);
+        }
+      } catch (e) {
+        alert('Error de conexión');
+      }
+    }
+
+    // DRY RUN & CLEAN ACTIONS
+    async function runDryRunAction(actionId) {
+      try {
+        const res = await fetch('/api/optimizations');
+        const list = await res.json();
+        const item = list.find(x => x.id === actionId);
+        if (item && item.dry_run) {
+          alert(
+            `[SIMULACIÓN PREVENTIVA — DRY-RUN]\n` +
+            `Acción: ${item.title}\n\n` +
+            `Operaciones que se ejecutarán:\n` +
+            item.dry_run.operations.map(op => ` • ${op}`).join('\n') + '\n\n' +
+            `Garantía de Estabilidad:\n` +
+            ` ${item.dry_run.rollback_guarantee}`
+          );
+        } else {
+          alert('No hay información de simulación disponible.');
+        }
+      } catch (e) {
+        alert('Error al consultar simulación: ' + e);
+      }
+    }
+
+    async function applyCleanAction(actionId) {
+      if (!confirm(`¿Confirmas la ejecución de la limpieza segura?`)) return;
+      try {
+        const res = await fetch('/api/optimize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action_id: actionId })
+        });
+        const data = await res.json();
+        alert(data.message || 'Limpieza ejecutada');
+      } catch (e) {
+        alert('Error al ejecutar limpieza: ' + e);
+      }
+    }
+
+    // ENTERPRISE CYBERSECURITY TELEMETRY & PERSISTENCE HUNTER
+    async function runLiveSecurityScan() {
+      showToast('🛡️ Iniciando auditoría heurística completa de procesos, persistencias y memoria...');
+      await Promise.all([
+        loadProcessTelemetry(),
+        loadPersistenceAudit(),
+        loadTamperAlerts(),
+        refreshDefenderOverview()
+      ]);
+      showToast('✓ Auditoría de ciberseguridad completada con éxito.');
+    }
+
+    async function refreshDefenderOverview() {
+      try {
+        const res = await fetch('/api/security/scan');
+        const data = await res.json();
+        // Update status chips if present
+        const chip = document.getElementById('secStatusChip');
+        if (chip) chip.className = 'status-chip chip-optimal';
+      } catch (e) {}
+    }
+
+    async function loadProcessTelemetry() {
+      const container = document.getElementById('processTelemetryList');
+      if (!container) return;
+      container.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); padding:10px; text-align:center;">Analizando procesos en memoria y calculando Score de Sospecha...</div>';
+
+      try {
+        const res = await fetch('/api/security/processes');
+        const procs = await res.json();
+
+        if (!procs || procs.length === 0) {
+          container.innerHTML = '<div style="font-size:0.78rem; color:var(--optimal-text); padding:12px; text-align:center;">✓ Todos los procesos en memoria se encuentran limpios y verificados.</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        procs.slice(0, 40).forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'game-item-card';
+          card.style.flexDirection = 'column';
+          card.style.alignItems = 'stretch';
+          card.style.gap = '6px';
+
+          let chipClass = 'chip-optimal';
+          if (p.level === 'CRITICAL_THREAT') chipClass = 'chip-critical';
+          else if (p.level === 'SUSPICIOUS') chipClass = 'chip-warning';
+          else if (p.level === 'LOW_RISK') chipClass = 'chip-neutral';
+
+          const reasonsHtml = p.reasons && p.reasons.length > 0
+            ? `<div style="font-size:0.7rem; color:var(--warning-text); margin-top:2px;">⚠️ ${p.reasons.join(' • ')}</div>`
+            : '';
+
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="status-chip ${chipClass}">${p.level} • Score: ${p.score}/100</span>
+                <strong style="font-size:0.82rem; color:var(--text);">${p.name}</strong>
+                <span style="font-size:0.72rem; color:var(--text-dim); font-family:monospace;">(PID: ${p.pid})</span>
+              </div>
+              <div style="display:flex; gap:6px;">
+                ${p.path ? `<button class="btn btn-secondary" style="font-size:0.7rem; padding:3px 7px;" onclick="lookupVirusTotal('${encodeURIComponent(p.path)}')">🔍 VirusTotal</button>` : ''}
+                ${p.score >= 45 ? `<button class="btn btn-secondary" style="font-size:0.7rem; padding:3px 7px; color:var(--danger-text); border-color:var(--danger-border);" onclick="remediateThreat('${encodeURIComponent(p.path)}', ${p.pid})">⛔ Cuarentena</button>` : ''}
+              </div>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-muted); word-break:break-all; font-family:monospace;">${p.path || 'Proceso de Sistema / Protegido'}</div>
+            <div style="display:flex; gap:12px; font-size:0.7rem; color:var(--text-dim);">
+              <span>Firma Authenticode: <strong style="color:${p.is_signed ? 'var(--optimal-text)' : 'var(--text-muted)'}">${p.signature_status}</strong></span>
+              ${p.hollowing_detected ? '<span style="color:var(--danger-text); font-weight:700;">🚨 Hollowing / RWX Detectado</span>' : ''}
+            </div>
+            ${reasonsHtml}
+          `;
+          container.appendChild(card);
+        });
+      } catch (e) {
+        container.innerHTML = '<div style="font-size:0.78rem; color:var(--danger-text); padding:8px;">Error al cargar telemetría de procesos.</div>';
+      }
+    }
+
+    async function loadPersistenceAudit() {
+      const container = document.getElementById('persistenceItemsList');
+      if (!container) return;
+      container.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); padding:10px; text-align:center;">Auditando Run keys, Winlogon, Tareas programadas y Hosts...</div>';
+
+      try {
+        const res = await fetch('/api/security/persistence');
+        const items = await res.json();
+
+        container.innerHTML = '';
+        if (!items || items.length === 0) {
+          container.innerHTML = '<div style="font-size:0.78rem; color:var(--optimal-text); padding:12px; text-align:center;">✓ No se encontraron entradas anómalas de persistencia.</div>';
+          return;
+        }
+
+        items.forEach(it => {
+          const card = document.createElement('div');
+          card.className = 'game-item-card';
+          let chipClass = it.is_suspicious ? (it.risk_level === 'CRITICAL' ? 'chip-critical' : 'chip-warning') : 'chip-neutral';
+
+          card.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:3px; max-width:85%;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="status-chip ${chipClass}">${it.location_type} • ${it.risk_level}</span>
+                <strong style="font-size:0.8rem; color:var(--text);">${it.name}</strong>
+              </div>
+              <div style="font-size:0.72rem; color:var(--text-muted); font-family:monospace; word-break:break-all;">${it.target}</div>
+              <div style="font-size:0.7rem; color:${it.is_suspicious ? 'var(--warning-text)' : 'var(--text-dim)'};">${it.reason}</div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (e) {
+        container.innerHTML = '<div style="font-size:0.78rem; color:var(--danger-text); padding:8px;">Error al auditar persistencias.</div>';
+      }
+    }
+
+    async function loadTamperAlerts() {
+      const container = document.getElementById('antiTamperAlertsList');
+      if (!container) return;
+      try {
+        const res = await fetch('/api/security/tamper-alerts');
+        const alerts = await res.json();
+
+        if (!alerts || alerts.length === 0) {
+          container.innerHTML = '<div style="font-size:0.78rem; color:var(--optimal-text); padding:10px; text-align:center;">✓ Sentry activo en segundo plano. No se han detectado modificaciones no autorizadas en System32 ni Drivers.</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        alerts.slice(0, 15).forEach(a => {
+          const row = document.createElement('div');
+          row.style.display = 'flex';
+          row.style.justifyContent = 'space-between';
+          row.style.alignItems = 'center';
+          row.style.padding = '6px 10px';
+          row.style.background = 'var(--surface-inset)';
+          row.style.borderRadius = '4px';
+          row.style.fontSize = '0.74rem';
+
+          let chipClass = a.severity === 'CRITICAL' ? 'chip-critical' : (a.severity === 'WARNING' ? 'chip-warning' : 'chip-neutral');
+          row.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="status-chip ${chipClass}">${a.action}</span>
+              <span style="color:var(--text); font-family:monospace;">${a.target_path}</span>
+            </div>
+            <span style="color:var(--text-dim); font-size:0.68rem;">${a.time_str}</span>
+          `;
+          container.appendChild(row);
+        });
+      } catch (e) {}
+    }
+
+    async function lookupVirusTotal(encodedPath) {
+      const path = decodeURIComponent(encodedPath);
+      showToast(`Calculando hash SHA-256 para consulta VirusTotal...`);
+      try {
+        const res = await fetch(`/api/security/virustotal?path=${encodeURIComponent(path)}`);
+        const data = await res.json();
+        if (data.web_report_url) {
+          window.open(data.web_report_url, '_blank');
+          showToast(`Reporte VirusTotal abierto. SHA-256: ${data.sha256.substring(0, 12)}...`, 5000);
+        } else {
+          showToast(data.message || 'No se pudo consultar VirusTotal.');
+        }
+      } catch (e) {
+        showToast('Error al conectar con servicio de reputación en la nube.');
+      }
+    }
+
+    async function remediateThreat(encodedPath, pid) {
+      const path = decodeURIComponent(encodedPath);
+      if (!confirm(`¿Deseas finalizar el proceso (PID ${pid}) y enviar el archivo a cuarentena segura?`)) return;
+
+      try {
+        const res = await fetch('/api/security/remediate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: path, pid: pid, action: 'quarantine' })
+        });
+        const data = await res.json();
+        showToast(data.message);
+        loadProcessTelemetry();
+      } catch (e) {
+        showToast('Error al ejecutar remediación.');
+      }
+    }
+
+    async function remediateSecurityAction(action) {
+      const labels = {
+        clean_hosts: 'limpiar desvíos maliciosos en el archivo Hosts',
+        restore_winlogon: 'restaurar claves originales de Winlogon (Shell y Userinit)'
+      };
+      if (!confirm(`¿Confirmas la acción de ${labels[action] || action}?`)) return;
+
+      try {
+        const res = await fetch('/api/security/remediate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: action })
+        });
+        const data = await res.json();
+        showToast(data.message);
+        loadPersistenceAudit();
+      } catch (e) {
+        showToast('Error al ejecutar remediación de persistencia.');
+      }
+    }
+
+    async function applyMasterMode(mode) {
+      const names = {
+        gamer: 'Modo Gamer',
+        unity: 'Modo Unity & Desarrollo',
+        ai: 'Modo IA & PyTorch',
+        potato: 'Modo Hardware Limitado'
+      };
+      if (!confirm(`¿Confirmas la aplicación del perfil: ${names[mode]}?`)) return;
+
+      try {
+        const res = await fetch('/api/modes/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: mode })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Perfil ${names[mode]} aplicado correctamente.`);
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (e) {
+        alert('Error de conexión');
+      }
+    }
+
+    async function toggleGpuEmergency() {
+      gpuEmergencyActive = !gpuEmergencyActive;
+      const res = await fetch('/api/gpu-emergency', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enable: gpuEmergencyActive })
+      });
+      const data = await res.json();
+      alert(data.message);
+      const btn = document.getElementById('btnGpuCap');
+      if (gpuEmergencyActive) {
+        btn.classList.add('btn-warning');
+        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Límite Activo (100W)`;
+      } else {
+        btn.classList.remove('btn-warning');
+        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Límite Seguro GPU (100W)`;
+      }
+    }
+
+    function openSurgeryModal() {
+      document.getElementById('surgeryModal').style.display = 'flex';
+    }
+
+    function closeSurgeryModal() {
+      document.getElementById('surgeryModal').style.display = 'none';
+    }
+
+    async function executeRebootUefi() {
+      if (confirm('Windows reiniciará de inmediato para ingresar a la BIOS. Guarda tu trabajo antes de continuar.')) {
+        await fetch('/api/reboot-uefi', { method: 'POST' });
+      }
+    }
+
+    async function exportPdf() {
+      const res = await fetch('/api/export-pdf', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert('Informe técnico PDF guardado en Escritorio:\n' + data.path);
+      } else {
+        alert('Error: ' + data.message);
+      }
+    }
+
+    // TOAST NOTIFICATION SYSTEM
+    function showToast(msg, duration = 3500) {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'toast-pill';
+      t.innerHTML = `<svg style="width:16px;height:16px;stroke:var(--primary);fill:none;stroke-width:2;" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 12l2 2 4-4"/></svg> <span>${msg}</span>`;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(10px)';
+        t.style.transition = 'all 0.3s ease';
+        setTimeout(() => t.remove(), 300);
+      }, duration);
+    }
+
+    // FEATURE 1: WATCHDOG & AUTO-TDR GUARD
+    let watchdogActive = true;
+    async function toggleWatchdog() {
+      watchdogActive = !watchdogActive;
+      try {
+        const res = await fetch('/api/watchdog/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enable: watchdogActive })
+        });
+        const data = await res.json();
+        updateWatchdogUI(watchdogActive);
+        showToast(watchdogActive ? 'Auto-TDR Guard activado: Protegiendo GPU contra congelamientos.' : 'Watchdog pausado.');
+      } catch (e) {
+        showToast('Error al alternar Watchdog');
+      }
+    }
+
+    function updateWatchdogUI(active) {
+      const text = document.getElementById('watchdogStatusText');
+      const dot = document.getElementById('watchdogDot');
+      if (active) {
+        text.textContent = 'ACTIVO';
+        dot.style.background = 'var(--optimal-text)';
+      } else {
+        text.textContent = 'PAUSADO';
+        dot.style.background = 'var(--warning-text)';
+      }
+    }
+
+    async function pollWatchdog() {
+      try {
+        const res = await fetch('/api/watchdog/status');
+        const data = await res.json();
+        watchdogActive = data.auto_guard_enabled;
+        updateWatchdogUI(watchdogActive);
+        if (data.last_action_taken && !window._lastNotifiedAction) {
+          window._lastNotifiedAction = data.last_action_taken;
+          showToast(`⚡ ${data.last_action_taken}`, 5000);
+        }
+      } catch (e) {}
+    }
+
+    // FEATURE 2: SAFE VRAM INTEGRITY TEST (15s)
+    let vramPollInterval = null;
+    function openVramModal() {
+      document.getElementById('vramModal').style.display = 'flex';
+    }
+    function closeVramModal() {
+      document.getElementById('vramModal').style.display = 'none';
+      if (vramPollInterval) clearInterval(vramPollInterval);
+    }
+
+    async function runVramTest() {
+      const btn = document.getElementById('btnStartVram');
+      btn.disabled = true;
+      btn.textContent = 'Ejecutando Test...';
+      document.getElementById('vramStatusChip').className = 'status-chip warning';
+      document.getElementById('vramStatusChip').textContent = 'Analizando';
+
+      try {
+        await fetch('/api/vram-test/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ size_mb: 512 })
+        });
+
+        if (vramPollInterval) clearInterval(vramPollInterval);
+        vramPollInterval = setInterval(pollVramStatus, 400);
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = 'Iniciar Test de VRAM (15s)';
+        showToast('Error de comunicación con el test de VRAM');
+      }
+    }
+
+    async function pollVramStatus() {
+      try {
+        const res = await fetch('/api/vram-test/status');
+        const data = await res.json();
+
+        document.getElementById('vramProgressFill').style.width = `${data.progress_pct}%`;
+        document.getElementById('vramPctText').textContent = `Progreso: ${data.progress_pct}%`;
+        document.getElementById('vramErrorsText').textContent = `Errores de bit: ${data.errors_found}`;
+        document.getElementById('vramMsgText').textContent = data.message;
+        if (data.device_name && data.device_name !== 'N/A') {
+          document.getElementById('vramDeviceText').textContent = `Dispositivo: ${data.device_name}`;
+        }
+
+        if (data.status === 'completed' || data.status === 'error') {
+          clearInterval(vramPollInterval);
+          const btn = document.getElementById('btnStartVram');
+          btn.disabled = false;
+          btn.textContent = 'Iniciar Test de VRAM (15s)';
+
+          const chip = document.getElementById('vramStatusChip');
+          if (data.errors_found === 0 && data.status === 'completed') {
+            chip.className = 'status-chip optimal';
+            chip.textContent = 'VRAM Íntegra';
+            showToast('✓ Test de VRAM superado con éxito sin errores de bit.');
+          } else {
+            chip.className = 'status-chip critical';
+            chip.textContent = 'Fallo Detectado';
+            showToast(`⚠️ Alerta: Se detectaron ${data.errors_found} fallos de bit en VRAM.`);
+          }
+        }
+      } catch (e) {}
+    }
+
+    // FEATURE 3: GAME LATENCY ENGINE & PROCESS BOOSTER
+    function openGameModal() {
+      document.getElementById('gameModal').style.display = 'flex';
+      loadRunningGames();
+    }
+    function closeGameModal() {
+      document.getElementById('gameModal').style.display = 'none';
+    }
+
+    async function loadRunningGames() {
+      const container = document.getElementById('gameListContainer');
+      container.innerHTML = '<div style="font-size:0.78rem; color:var(--text-muted); padding:8px;">Buscando juegos activos en memoria...</div>';
+
+      try {
+        const res = await fetch('/api/games/running');
+        const games = await res.json();
+
+        if (games.length === 0) {
+          container.innerHTML = `
+            <div class="game-item-card" style="justify-content:center; text-align:center; flex-direction:column; gap:4px; padding:16px;">
+              <span style="font-size:0.83rem; font-weight:600; color:var(--text);">No hay juegos competitivos detectados en este momento</span>
+              <span style="font-size:0.75rem; color:var(--text-dim);">Abre tu juego favorito (CS2, Valorant, Fortnite, LoL, etc.) y pulsa "Actualizar Juegos".</span>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = '';
+        games.forEach(g => {
+          const card = document.createElement('div');
+          card.className = 'game-item-card';
+          card.innerHTML = `
+            <div>
+              <div style="font-size:0.85rem; font-weight:700; color:var(--text);">${g.game_title}</div>
+              <div style="font-size:0.72rem; color:var(--text-dim); font-family:monospace;">${g.process_name} (PID: ${g.pid}) &bull; Prioridad: ${g.priority}</div>
+            </div>
+            <div>
+              ${g.is_boosted 
+                ? `<button class="btn btn-secondary" style="font-size:0.72rem; padding:4px 8px;" onclick="restoreGamePriority(${g.pid})">Restaurar Normal</button>` 
+                : `<button class="btn btn-primary" style="font-size:0.72rem; padding:4px 8px;" onclick="boostGamePriority(${g.pid})">⚡ Boost Latencia</button>`
+              }
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (e) {
+        container.innerHTML = '<div style="font-size:0.78rem; color:var(--danger-text);">Error al consultar procesos de juegos.</div>';
+      }
+    }
+
+    async function boostGamePriority(pid) {
+      try {
+        const res = await fetch('/api/games/boost', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pid: pid, priority: 'high' })
+        });
+        const data = await res.json();
+        showToast(data.message);
+        loadRunningGames();
+      } catch (e) {
+        showToast('Error al optimizar juego');
+      }
+    }
+
+    async function restoreGamePriority(pid) {
+      try {
+        const res = await fetch('/api/games/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pid: pid })
+        });
+        const data = await res.json();
+        showToast(data.message);
+        loadRunningGames();
+      } catch (e) {
+        showToast('Error al restaurar juego');
+      }
+    }
+
+    // FEATURE 4: SHAREABLE FORUM FORENSIC BUNDLE
+    async function copyForumReport() {
+      try {
+        const res = await fetch('/api/export-forum-bundle');
+        const data = await res.json();
+        if (data.markdown) {
+          await navigator.clipboard.writeText(data.markdown);
+          showToast('📋 ¡Reporte anónimo para foros copiado al portapapeles! Listo para pegar en Reddit o Discord.', 4500);
+        } else {
+          showToast('No se pudo generar el reporte para foros.');
+        }
+      } catch (e) {
+        // Fallback for non-https clipboard
+        try {
+          const res = await fetch('/api/export-forum-bundle');
+          const data = await res.json();
+          const ta = document.createElement('textarea');
+          ta.value = data.markdown;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          showToast('📋 ¡Reporte anónimo copiado al portapapeles!');
+        } catch (err) {
+          showToast('Error al copiar reporte');
+        }
+      }
+    }
+
+    // ========================================================
+    // HIGH-PRECISION REAL-TIME DPC & JITTER OSCILLOSCOPE
+    // ========================================================
+    const canvas = document.getElementById('dpcCanvas');
+    const ctx = canvas.getContext('2d');
+    const maxPoints = 140;
+    let points = new Array(maxPoints).fill(120);
+    let peakJitter = 0;
+    let currentJitter = 14.2;
+    let targetJitter = 14.2;
+    let scanHeadX = 0;
+
+    function resizeCanvas() {
+      if (!canvas || !canvas.parentElement) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function resetDpcPeak() {
+      peakJitter = currentJitter;
+      const peakEl = document.getElementById('scopePeakVal');
+      if (peakEl) peakEl.textContent = `${peakJitter.toFixed(1)} µs`;
+    }
+
+    function renderOscilloscope() {
+      requestAnimationFrame(renderOscilloscope);
+
+      const parentPane = document.getElementById('pane-telemetry');
+      if (!parentPane || !parentPane.classList.contains('active')) return;
+
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      if (w <= 0 || h <= 0) return;
+
+      if (canvas.width !== Math.floor(w * (window.devicePixelRatio || 1))) {
+        resizeCanvas();
+      }
+
+      currentJitter += (targetJitter - currentJitter) * 0.12;
+
+      // Dark background
+      ctx.fillStyle = '#0c0d12';
+      ctx.fillRect(0, 0, w, h);
+
+      // Grid Guidelines & Calibration Levels
+      ctx.save();
+      const maxRangeUs = 2000;
+      const levels = [
+        { val: 0, label: '0 µs (Base)', color: 'rgba(255, 255, 255, 0.15)' },
+        { val: 500, label: '500 µs (Nominal)', color: 'rgba(0, 240, 255, 0.25)' },
+        { val: 1000, label: '1000 µs (Alerta)', color: 'rgba(251, 191, 36, 0.35)' },
+        { val: 1800, label: '2000 µs (Spike Crítico)', color: 'rgba(248, 113, 113, 0.35)' }
+      ];
+
+      ctx.lineWidth = 1;
+      levels.forEach(lvl => {
+        const y = h - (lvl.val / maxRangeUs) * (h - 32) - 16;
+        ctx.strokeStyle = lvl.color;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(35, y);
+        ctx.lineTo(w - 10, y);
+        ctx.stroke();
+
+        ctx.fillStyle = lvl.color.replace('0.25', '0.75').replace('0.35', '0.85');
+        ctx.font = '10px ui-monospace, SFMono-Regular, monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(lvl.label, w - 12, y - 4);
+      });
+
+      // Subtle vertical time markers
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.setLineDash([2, 6]);
+      for (let x = 40; x < w; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Plot Points
+      const stepX = (w - 45) / (maxPoints - 1);
+      const coords = [];
+      for (let i = 0; i < points.length; i++) {
+        const x = 35 + i * stepX;
+        const clampedVal = Math.min(maxRangeUs, Math.max(0, points[i]));
+        const y = h - (clampedVal / maxRangeUs) * (h - 32) - 16;
+        coords.push({ x, y });
+      }
+
+      if (coords.length > 1) {
+        // Gradient fill under the curve
+        ctx.save();
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        const isSpike = currentJitter > 1000;
+        const isElevated = currentJitter > 500;
+
+        if (isSpike) {
+          grad.addColorStop(0, 'rgba(248, 113, 113, 0.32)');
+          grad.addColorStop(1, 'rgba(248, 113, 113, 0.0)');
+        } else if (isElevated) {
+          grad.addColorStop(0, 'rgba(251, 191, 36, 0.25)');
+          grad.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
+        } else {
+          grad.addColorStop(0, 'rgba(0, 240, 255, 0.25)');
+          grad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(coords[0].x, h);
+        ctx.lineTo(coords[0].x, coords[0].y);
+        for (let i = 1; i < coords.length; i++) {
+          const xc = (coords[i - 1].x + coords[i].x) / 2;
+          const yc = (coords[i - 1].y + coords[i].y) / 2;
+          ctx.quadraticCurveTo(coords[i - 1].x, coords[i - 1].y, xc, yc);
+        }
+        ctx.lineTo(coords[coords.length - 1].x, coords[coords.length - 1].y);
+        ctx.lineTo(coords[coords.length - 1].x, h);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Neon Glow Trace
+        const traceColor = isSpike ? '#f87171' : (isElevated ? '#fbbf24' : '#00f0ff');
+        ctx.strokeStyle = traceColor;
+        ctx.shadowColor = traceColor;
+        ctx.shadowBlur = 9;
+        ctx.lineWidth = 2.2;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(coords[0].x, coords[0].y);
+        for (let i = 1; i < coords.length; i++) {
+          const xc = (coords[i - 1].x + coords[i].x) / 2;
+          const yc = (coords[i - 1].y + coords[i].y) / 2;
+          ctx.quadraticCurveTo(coords[i - 1].x, coords[i - 1].y, xc, yc);
+        }
+        ctx.lineTo(coords[coords.length - 1].x, coords[coords.length - 1].y);
+        ctx.stroke();
+
+        // Animated Leading Edge Point
+        const last = coords[coords.length - 1];
+        ctx.fillStyle = traceColor;
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.arc(last.x, last.y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Radar Scanner Sweep Head
+        scanHeadX = (scanHeadX + 1.5) % w;
+        ctx.shadowBlur = 0;
+        const sweep = ctx.createLinearGradient(scanHeadX - 25, 0, scanHeadX + 2, 0);
+        sweep.addColorStop(0, 'rgba(0, 240, 255, 0)');
+        sweep.addColorStop(1, 'rgba(0, 240, 255, 0.08)');
+        ctx.fillStyle = sweep;
+        ctx.fillRect(scanHeadX - 25, 0, 27, h);
+
+        ctx.restore();
+      }
+    }
+
+    requestAnimationFrame(renderOscilloscope);
+
+    async function pollTelemetry() {
+      try {
+        // Poll DPC Pulse
+        const res = await fetch('/api/dpc-pulse');
+        const data = await res.json();
+
+        targetJitter = Number(data.jitter_us) || 14.2;
+        if (targetJitter > peakJitter) {
+          peakJitter = targetJitter;
+        }
+
+        const jitterVariance = (Math.random() - 0.5) * 6;
+        points.push(Math.max(10, targetJitter + jitterVariance));
+        if (points.length > maxPoints) points.shift();
+
+        const navChip = document.getElementById('pulseMicrosec');
+        if (navChip) navChip.textContent = `${targetJitter.toFixed(1)} µs`;
+
+        const dot = document.getElementById('pulseDot');
+        const label = document.getElementById('dpcStatusLabel');
+        const liveVal = document.getElementById('scopeLiveVal');
+        const liveChip = document.getElementById('scopeLiveChip');
+        const peakVal = document.getElementById('scopePeakVal');
+        const readinessVal = document.getElementById('scopeReadinessVal');
+
+        if (liveVal) liveVal.textContent = `${targetJitter.toFixed(1)} µs`;
+        if (peakVal) peakVal.textContent = `${peakJitter.toFixed(1)} µs`;
+
+        if (targetJitter > 1000) {
+          if (dot) dot.style.background = 'var(--danger-text)';
+          if (label) {
+            label.textContent = `Alerta: Latencia Elevada (${targetJitter.toFixed(1)} µs)`;
+            label.style.color = 'var(--danger-text)';
+          }
+          if (liveChip) {
+            liveChip.className = 'status-chip chip-critical';
+            liveChip.textContent = 'SPIKE';
+          }
+          if (readinessVal) {
+            readinessVal.textContent = 'Riesgo de Micro-Stutter';
+            readinessVal.style.color = 'var(--danger-text)';
+          }
+        } else if (targetJitter > 500) {
+          if (dot) dot.style.background = 'var(--warning-text)';
+          if (label) {
+            label.textContent = `Aceptable: (${targetJitter.toFixed(1)} µs)`;
+            label.style.color = 'var(--warning-text)';
+          }
+          if (liveChip) {
+            liveChip.className = 'status-chip chip-warning';
+            liveChip.textContent = 'MODERADO';
+          }
+          if (readinessVal) {
+            readinessVal.textContent = 'Bueno (Aceptable)';
+            readinessVal.style.color = 'var(--warning-text)';
+          }
+        } else {
+          if (dot) dot.style.background = 'var(--optimal-text)';
+          if (label) {
+            label.textContent = `Status: Nominal (${targetJitter.toFixed(1)} µs)`;
+            label.style.color = 'var(--optimal-text)';
+          }
+          if (liveChip) {
+            liveChip.className = 'status-chip chip-optimal';
+            liveChip.textContent = 'ÓPTIMO';
+          }
+          if (readinessVal) {
+            readinessVal.textContent = 'Excelente (Sin Stutter)';
+            readinessVal.style.color = 'var(--optimal-text)';
+          }
+        }
+
+        // Poll Live Telemetry (CPU, RAM, GPU)
+        const liveRes = await fetch('/api/telemetry/live');
+        const live = await liveRes.json();
+
+        const topCpu = document.getElementById('topCpuPct');
+        const topRam = document.getElementById('topRamLoad');
+        const topGpu = document.getElementById('topGpuTemp');
+        if (topCpu) topCpu.textContent = `${live.cpu_pct}%`;
+        if (topRam) topRam.textContent = `${live.ram_load_pct}%`;
+        if (topGpu) topGpu.textContent = `${live.gpu.temp_c || 50} °C`;
+
+        const cardCpu = document.getElementById('cardCpuValue');
+        const cpuBar = document.getElementById('cpuBarFill');
+        if (cardCpu) cardCpu.textContent = `i7-10700KF • ${live.cpu_pct}%`;
+        if (cpuBar) cpuBar.style.width = `${Math.min(100, Math.max(8, live.cpu_pct))}%`;
+
+        const cardRam = document.getElementById('cardRamValue');
+        const ramBar = document.getElementById('ramBarFill');
+        if (cardRam) cardRam.textContent = `${live.ram_used_gb} GB / ${live.ram_total_gb} GB`;
+        if (ramBar) ramBar.style.width = `${live.ram_load_pct}%`;
+
+        const cardGpu = document.getElementById('cardGpuValue');
+        const gpuBar = document.getElementById('gpuBarFill');
+        if (cardGpu) cardGpu.textContent = `RTX 3060 • ${live.gpu.power_w || 15}W / ${live.gpu.temp_c || 50}°C`;
+        if (gpuBar) gpuBar.style.width = `${Math.min(100, Math.max(12, (live.gpu.power_w / 170) * 100))}%`;
+      } catch (e) {}
+    }
+
+    // FEATURE 6: PC HEALTH SCORECARD
+    async function openHealthModal() {
+      document.getElementById('healthModal').style.display = 'flex';
+      await refreshHealthModalData();
+    }
+
+    function closeHealthModal() {
+      document.getElementById('healthModal').style.display = 'none';
+    }
+
+    async function refreshHealthModalData() {
+      try {
+        const res = await fetch('/api/health-score');
+        const data = await res.json();
+
+        const scoreBig = document.getElementById('healthScoreBig');
+        const verdictBadge = document.getElementById('healthVerdictBadge');
+        const gaugeBadge = document.getElementById('healthGaugeBadge');
+        const potentialScore = document.getElementById('healthPotentialScore');
+        const listContainer = document.getElementById('healthPenaltiesList');
+
+        scoreBig.textContent = data.score;
+        verdictBadge.textContent = currentLang === 'es' ? data.verdict : data.verdict_en;
+        verdictBadge.className = `status-chip chip-${data.status_color}`;
+        gaugeBadge.className = `health-gauge-badge ${data.status_color}`;
+        potentialScore.textContent = `${data.potential_score} / 100`;
+
+        listContainer.innerHTML = '';
+        if (!data.penalties || data.penalties.length === 0) {
+          listContainer.innerHTML = '<div style="font-size:0.78rem; color:var(--optimal-text); padding:8px;">No se detectaron penalizaciones. ¡Tu sistema está en óptimas condiciones!</div>';
+        } else {
+          data.penalties.forEach(p => {
+            const row = document.createElement('div');
+            row.className = 'health-penalty-item';
+            row.innerHTML = `
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <strong style="color:var(--text); font-size:0.78rem;">[${p.subsystem}]</strong>
+                  <span style="color:var(--text); font-size:0.76rem;">${p.reason}</span>
+                </div>
+                <div style="font-size:0.72rem; color:var(--text-muted);">${p.fix}</div>
+              </div>
+              <div class="health-penalty-tag">-${p.points} pts</div>
+            `;
+            listContainer.appendChild(row);
+          });
+        }
+      } catch (e) {
+        console.error('Error al cargar índice de salud:', e);
+      }
+    }
+
+    async function pollHealthScore() {
+      try {
+        const res = await fetch('/api/health-score');
+        const data = await res.json();
+        const scoreVal = document.getElementById('healthScoreVal');
+        const scoreDot = document.getElementById('healthScoreDot');
+
+        scoreVal.textContent = `${data.score}/100`;
+        if (data.status_color === 'optimal') {
+          scoreDot.style.background = 'var(--optimal-text)';
+        } else if (data.status_color === 'warning') {
+          scoreDot.style.background = 'var(--warning-text)';
+        } else {
+          scoreDot.style.background = 'var(--danger-text)';
+        }
+      } catch (e) {}
+    }
+
+    // FEATURE 7: SYSTEM SETTINGS MANAGEMENT & REGISTRY SYNC
+    async function openSettingsModal() {
+      try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        document.getElementById('cfgAutostart').checked = !!data.autostart;
+        document.getElementById('cfgWatchdog').checked = !!data.auto_tdr_guard;
+        document.getElementById('cfgTimerBoost').checked = !!data.auto_timer_boost;
+        document.getElementById('cfgGpuWatts').value = data.gpu_safe_wattage || 100;
+        document.getElementById('cfgTheme').value = data.theme || 'dark';
+        document.getElementById('cfgLang').value = data.language || 'es';
+      } catch (e) {}
+      document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    async function saveSettings() {
+      const payload = {
+        autostart: document.getElementById('cfgAutostart').checked,
+        auto_tdr_guard: document.getElementById('cfgWatchdog').checked,
+        auto_timer_boost: document.getElementById('cfgTimerBoost').checked,
+        gpu_safe_wattage: parseInt(document.getElementById('cfgGpuWatts').value, 10) || 100,
+        theme: document.getElementById('cfgTheme').value,
+        language: document.getElementById('cfgLang').value
+      };
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(currentLang === 'es' ? '⚙️ ¡Configuración guardada y sincronizada!' : '⚙️ Settings saved and synchronized!');
+          if (payload.theme !== document.documentElement.getAttribute('data-theme')) {
+            document.documentElement.setAttribute('data-theme', payload.theme);
+            document.getElementById('themeIconSun').style.display = payload.theme === 'light' ? 'block' : 'none';
+            document.getElementById('themeIconMoon').style.display = payload.theme === 'dark' ? 'block' : 'none';
+          }
+          if (payload.language !== currentLang) {
+            currentLang = payload.language;
+            document.getElementById("btnLang").textContent = currentLang.toUpperCase();
+            applyLanguage(currentLang);
+          }
+          closeSettingsModal();
+        } else {
+          showToast('Error al guardar configuración');
+        }
+      } catch (e) {
+        showToast('Error de comunicación con el servidor');
+      }
+    }
+
+    async function loadSettingsOnBoot() {
+      try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        if (data.theme && data.theme !== document.documentElement.getAttribute('data-theme')) {
+          document.documentElement.setAttribute('data-theme', data.theme);
+          document.getElementById('themeIconSun').style.display = data.theme === 'light' ? 'block' : 'none';
+          document.getElementById('themeIconMoon').style.display = data.theme === 'dark' ? 'block' : 'none';
+        }
+        if (data.language && data.language !== currentLang) {
+          currentLang = data.language;
+          document.getElementById("btnLang").textContent = currentLang.toUpperCase();
+          applyLanguage(currentLang);
+        }
+      } catch (e) {}
+    }
+
+    setInterval(pollTelemetry, 800);
+    setInterval(pollWatchdog, 4000);
+    setInterval(pollHealthScore, 5000);
+    pollWatchdog();
+    pollHealthScore();
+    loadSettingsOnBoot();
+  </script>
+</body>
+</html>

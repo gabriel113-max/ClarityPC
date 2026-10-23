@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claritypc"
+version = "1.0.0"
+description = "Open-source, transparent PC diagnostics, cyber-forensic security suite, and safe optimization."
+readme = "README.md"
+authors = [{ name = "Gabriel & ClarityPC Contributors" }]
+license = { text = "GPL-3.0" }
+requires-python = ">=3.10"
+dependencies = [
+    "pywebview>=5.0.0",
+    "pillow>=10.0.0"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Microsoft :: Windows",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Topic :: System :: Hardware",
+    "Topic :: System :: Systems Administration",
+]
+
+[project.scripts]
+clarity = "clarity.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
