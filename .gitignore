@@ -54,6 +54,8 @@ cover/
 *.log
 debug_server.log
 out.log
+*.bat
+push_output.txt
 .clarity_state.json
 .clarity_quarantine/
 *.dmp
